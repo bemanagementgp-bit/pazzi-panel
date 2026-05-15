@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "nombre": "Pazzi Buns - Sede Central",
+    "zona": "CABA",
+    "direccion": "Av. Corrientes 1234, CABA",
+    "telefono": "+54 11 1234-5678",
+    "lat": -34.603722,
+    "lng": -58.381592,
+    "horario": "09:00 - 22:00"
+  },
+  {
+    "id": 2,
+    "nombre": "Pazzi Buns - San Isidro",
+    "zona": "Zona Norte",
+    "direccion": "Calle 9 de Julio 456, San Isidro",
+    "telefono": "+54 11 2345-6789",
+    "lat": -34.476671,
+    "lng": -58.507669,
+    "horario": "10:00 - 21:00"
+  },
+  {
+    "id": 3,
+    "nombre": "Pazzi Buns - La Matanza",
+    "zona": "Zona Oeste",
+    "direccion": "Calle Mitre 789, La Matanza",
+    "telefono": "+54 11 3456-7890",
+    "lat": -34.754194,
+    "lng": -58.625278,
+    "horario": "09:30 - 20:30"
+  },
+  {
+    "id": 4,
+    "nombre": "Pazzi Buns - Avellaneda",
+    "zona": "Zona Sur",
+    "direccion": "Av. Vélez Sársfield 101, Avellaneda",
+    "telefono": "+54 11 4567-8901",
+    "lat": -34.662663,
+    "lng": -58.363611,
+    "horario": "08:00 - 21:00"
+  },
+  {
+    "id": 5,
+    "nombre": "Pazzi Buns - Mar del Plata",
+    "zona": "Mar del Plata",
+    "direccion": "Av. Constitución 202, Mar del Plata",
+    "telefono": "+54 223 456-7890",
+    "lat": -38.000000,
+    "lng": -57.557667,
+    "horario": "10:00 - 22:00"
+  },
+  {
+    "id": 6,
+    "nombre": "Pazzi Buns - Córdoba",
+    "zona": "Córdoba",
+    "direccion": "Calle Rivadavia 303, Córdoba",
+    "telefono": "+54 351 567-8901",
+    "lat": -31.420000,
+    "lng": -64.188889,
+    "horario": "09:00 - 21:00"
+  }
+]
