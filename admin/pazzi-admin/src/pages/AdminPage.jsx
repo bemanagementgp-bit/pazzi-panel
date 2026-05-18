@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { puntosAPI } from '../services/api.js';
 import PuntosTable from '../components/PuntosTable.jsx';
 import PuntoForm from '../components/PuntoForm.jsx';
@@ -20,10 +20,13 @@ const T = {
   sidebar: '#000000',
 };
 
-const NAV = [
+const NAV_ADMIN = [
   { id: 'dashboard', label: 'Dashboard',       icon: 'dashboard' },
   { id: 'puntos',    label: 'Puntos de Venta', icon: 'storefront' },
   { id: 'mapa',      label: 'Mapa',            icon: 'map' },
+];
+const NAV_VENDEDOR = [
+  { id: 'puntos', label: 'Mis puntos', icon: 'storefront' },
 ];
 
 export default function AdminPage({ admin, onLogout, isAdmin }) {
@@ -37,6 +40,15 @@ export default function AdminPage({ admin, onLogout, isAdmin }) {
 
   const handleEdit   = (punto) => { setSelectedPunto(punto); setShowForm(true); };
   const handleDelete = (id)    => setDeleteConfirm(puntos.find(p => p.id === id));
+
+  const handleApprove = async (id) => {
+    try {
+      await puntosAPI.updateEstado(id, 'aprobado');
+      setRefresh(prev => prev + 1);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const confirmDelete = async () => {
     if (!deleteConfirm) return;
@@ -63,12 +75,13 @@ export default function AdminPage({ admin, onLogout, isAdmin }) {
   const adminRole    = admin?.role  || 'vendedor';
   const adminInitial = adminEmail[0]?.toUpperCase() || 'U';
   const roleLabel    = adminRole === 'admin' ? 'Administrador' : 'Vendedor';
+  const NAV          = adminRole === 'admin' ? NAV_ADMIN : NAV_VENDEDOR;
 
-  const sectionTitle = { dashboard: 'Dashboard', puntos: 'Puntos de Venta', mapa: 'Mapa de puntos' };
+  const sectionTitle = { dashboard: 'Dashboard', puntos: adminRole === 'admin' ? 'Puntos de Venta' : 'Mis puntos', mapa: 'Mapa de puntos' };
   const sectionSub   = {
-    dashboard: 'Resumen general de la operaci�n',
-    puntos:    'Gesti�n de sucursales registradas',
-    mapa:      'Distribuci�n geogr�fica de puntos',
+    dashboard: 'Resumen general de la operación',
+    puntos:    adminRole === 'admin' ? 'Gestión de sucursales — incluye pendientes de aprobación' : 'Puntos que registraste',
+    mapa:      'Distribución geográfica de puntos',
   };
 
   return (
@@ -316,7 +329,7 @@ export default function AdminPage({ admin, onLogout, isAdmin }) {
           {/* SIDEBAR */}
           <aside className="pz-sidebar">
             <nav className="pz-nav">
-              <div className="pz-nav-label">Navegaci�n</div>
+              <div className="pz-nav-label">Navegación</div>
               {NAV.map(item => (
                 <div
                   key={item.id}
@@ -379,13 +392,14 @@ export default function AdminPage({ admin, onLogout, isAdmin }) {
                     refresh={refresh}
                     onEdit={isAdmin ? handleEdit : null}
                     onDelete={isAdmin ? handleDelete : null}
+                    onApprove={isAdmin ? handleApprove : null}
                     setPuntos={setPuntos}
                     isAdmin={isAdmin}
                     emptySlot={
                       <div className="pz-empty">
                         <span className="ms">storefront</span>
                         <div className="pz-empty-title">Sin puntos registrados</div>
-                        <p className="pz-empty-desc">Registr� la primera sucursal para comenzar a gestionar los puntos de venta.</p>
+                        <p className="pz-empty-desc">Registrá la primera sucursal para comenzar a gestionar los puntos de venta.</p>
                         <button className="pz-btn-empty" onClick={openNewForm}>
                           <span className="ms">add_business</span>Registrar primer punto
                         </button>
@@ -409,6 +423,7 @@ export default function AdminPage({ admin, onLogout, isAdmin }) {
           <div className="pz-modal pz-modal-wide">
             <PuntoForm
               punto={selectedPunto}
+              isAdmin={isAdmin}
               onSuccess={handleFormSuccess}
               onCancel={() => { setShowForm(false); setSelectedPunto(null); }}
             />

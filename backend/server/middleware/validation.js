@@ -61,31 +61,31 @@ export const schemas = {
       }),
     telefono: Joi.string()
       .pattern(/^[\d\s\-\+()]*$/)
-      .min(9)
-      .max(20)
+      .min(6)
+      .max(25)
       .required()
       .messages({
         'string.pattern.base': 'Teléfono tiene formato inválido',
-        'string.min': 'Teléfono debe tener al menos 9 caracteres',
+        'string.min': 'Teléfono debe tener al menos 6 caracteres',
         'any.required': 'Teléfono es requerido',
       }),
     lat: Joi.number()
       .min(-90)
       .max(90)
-      .required()
+      .allow(null)
+      .optional()
       .messages({
         'number.min': 'Latitud debe estar entre -90 y 90',
         'number.max': 'Latitud debe estar entre -90 y 90',
-        'any.required': 'Latitud es requerida',
       }),
     lng: Joi.number()
       .min(-180)
       .max(180)
-      .required()
+      .allow(null)
+      .optional()
       .messages({
         'number.min': 'Longitud debe estar entre -180 y 180',
         'number.max': 'Longitud debe estar entre -180 y 180',
-        'any.required': 'Longitud es requerida',
       }),
     horario: Joi.string()
       .trim()

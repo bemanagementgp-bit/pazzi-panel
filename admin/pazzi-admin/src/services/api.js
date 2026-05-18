@@ -49,11 +49,13 @@ export const authAPI = {
 
 // Puntos API
 export const puntosAPI = {
-  getAll: () => apiClient.get('/puntos'),
-  getById: (id) => apiClient.get(`/puntos/${id}`),
-  create: (data) => apiClient.post('/puntos', data),
-  update: (id, data) => apiClient.put(`/puntos/${id}`, data),
-  delete: (id) => apiClient.delete(`/puntos/${id}`),
+  getAll:       ()          => apiClient.get('/puntos'),
+  getAllAdmin:   ()          => apiClient.get('/puntos/admin/all'),
+  getById:      (id)        => apiClient.get(`/puntos/${id}`),
+  create:       (data)      => apiClient.post('/puntos', data),
+  update:       (id, data)  => apiClient.put(`/puntos/${id}`, data),
+  updateEstado: (id, estado)=> apiClient.patch(`/puntos/${id}/estado`, { estado }),
+  delete:       (id)        => apiClient.delete(`/puntos/${id}`),
 };
 
 export default apiClient;

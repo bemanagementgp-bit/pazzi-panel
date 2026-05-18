@@ -28,7 +28,7 @@ export const REGIONES = [
   },
   {
     region: 'GBA Sur',
-    localidades: ['Lanús'],
+    localidades: ['Lanús', 'La Plata', 'Berisso', 'Ensenada', 'Quilmes', 'Avellaneda', 'Lomas de Zamora', 'Almirante Brown', 'Florencio Varela', 'Berazategui', 'Esteban Echeverría', 'Ezeiza'],
   },
   {
     region: 'Buenos Aires (interior)',

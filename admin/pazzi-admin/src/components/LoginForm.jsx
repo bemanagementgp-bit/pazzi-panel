@@ -10,6 +10,7 @@ export default function LoginForm({ onLoginSuccess }) {
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
   const [focused, setFocused]   = useState(null);
+  const [showPwd, setShowPwd]   = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -92,11 +93,11 @@ export default function LoginForm({ onLoginSuccess }) {
           </div>
           <div className="lp-brand-inner">
             <p style={{ fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(0,0,0,0.38)", marginBottom: "0.7rem" }}>
-              Panel de administracion
+              Panel de administración
             </p>
             <div className="lp-tagline">GESTION<br />TOTAL.</div>
             <p style={{ marginTop: "1rem", fontSize: "0.78rem", lineHeight: 1.7, color: "rgba(0,0,0,0.45)", maxWidth: 270 }}>
-              Controla cada punto de venta desde un solo lugar. Rapido, seguro y siempre disponible.
+              Controlá cada punto de venta desde un solo lugar. Rápido, seguro y siempre disponible.
             </p>
             <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.4rem", alignItems: "center" }}>
               <div style={{ width: 28, height: 2, background: "rgba(0,0,0,0.25)" }} />
@@ -117,12 +118,29 @@ export default function LoginForm({ onLoginSuccess }) {
             </div>
             <form onSubmit={handleSubmit}>
               <div className="lp-field">
-                <label className="lp-label">Correo electronico</label>
+                <label className="lp-label">Correo electrónico</label>
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} onFocus={() => setFocused("email")} onBlur={() => setFocused(null)} placeholder="usuario@pazzi.com" required style={inputStyle("email")} />
               </div>
               <div className="lp-field">
-                <label className="lp-label">Contrasena</label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)} onFocus={() => setFocused("password")} onBlur={() => setFocused(null)} placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required style={inputStyle("password")} />
+                <label className="lp-label">Contraseña</label>
+                <div style={{ position: 'relative' }}>
+                  <input type={showPwd ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} onFocus={() => setFocused("password")} onBlur={() => setFocused(null)} placeholder="••••••••" required style={{ ...inputStyle("password"), paddingRight: '2.5rem' }} />
+                  <button
+                    type="button"
+                    onClick={() => setShowPwd(v => !v)}
+                    style={{
+                      position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)',
+                      background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                      color: '#9ca3af', display: 'flex', alignItems: 'center', lineHeight: 1,
+                    }}
+                    tabIndex={-1}
+                    aria-label={showPwd ? 'Ocultar contraseña' : 'Ver contraseña'}
+                  >
+                    <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: '1.1rem', fontWeight: 'normal', fontStyle: 'normal' }}>
+                      {showPwd ? 'visibility_off' : 'visibility'}
+                    </span>
+                  </button>
+                </div>
               </div>
               {error && (
                 <div style={{ marginBottom: "1rem", padding: "0.7rem 0.9rem", background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 4, fontSize: "0.78rem", color: "#dc2626", fontWeight: 500 }}>
@@ -135,7 +153,7 @@ export default function LoginForm({ onLoginSuccess }) {
             </form>
             <p style={{ marginTop: "1.75rem", fontSize: "0.68rem", color: "#9ca3af", textAlign: "center", lineHeight: 1.6 }}>
               Problemas para ingresar?{" "}
-              <a href="mailto:soporte@pazzi.com" style={{ color: "#0A0A0A", fontWeight: 600, textDecoration: "none" }}>
+              <a href="https://wa.me/5492214400536" target="_blank" rel="noopener noreferrer" style={{ color: "#0A0A0A", fontWeight: 600, textDecoration: "none" }}>
                 Contactar soporte
               </a>
             </p>

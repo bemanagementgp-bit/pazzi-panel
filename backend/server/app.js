@@ -44,7 +44,7 @@ app.use(helmet({
 // En producción, usar solo los dominios permitidos desde .env
 const allowedOrigins = process.env.FRONTEND_URLS
   ? process.env.FRONTEND_URLS.split(',').map(url => url.trim())
-  : ['http://localhost:5173', 'http://localhost:5174'];
+  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:8080', 'http://127.0.0.1:8080'];
 
 app.use(cors({
   origin: allowedOrigins,

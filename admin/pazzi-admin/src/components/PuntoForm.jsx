@@ -15,7 +15,7 @@ const T = {
 
 const ZONAS = [];
 
-export default function PuntoForm({ punto, onSuccess, onCancel }) {
+export default function PuntoForm({ punto, onSuccess, onCancel, isAdmin }) {
   const [formData, setFormData] = useState({
     nombre: '', zona: '', direccion: '', telefono: '', lat: '', lng: '', horario: '',
   });
@@ -115,12 +115,15 @@ export default function PuntoForm({ punto, onSuccess, onCancel }) {
     map.panTo([lat, lng]);
   }, [formData.lat, formData.lng]);
 
-  const zonaFiltered = zonaSearch.trim() === ''
-    ? TODAS
-    : TODAS.filter(x =>
-        x.localidad.toLowerCase().includes(zonaSearch.toLowerCase()) ||
-        x.region.toLowerCase().includes(zonaSearch.toLowerCase())
-      );
+  const zonaFiltered = (() => {
+    const normalize = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    const q = normalize(zonaSearch);
+    if (!q) return TODAS;
+    return TODAS.filter(x =>
+      normalize(x.localidad).includes(q) ||
+      normalize(x.region).includes(q)
+    );
+  })();
 
   const selectZona = (localidad) => {
     setFormData(prev => ({ ...prev, zona: localidad }));
@@ -137,8 +140,18 @@ export default function PuntoForm({ punto, onSuccess, onCancel }) {
     e.preventDefault();
     setError('');
     setLoading(true);
+    // Si el usuario escribió algo en zona pero no seleccionó del dropdown, usarlo igual
+    const zonaFinal = formData.zona || zonaSearch.trim();
     try {
-      const payload = { ...formData, lat: parseFloat(formData.lat), lng: parseFloat(formData.lng) };
+      const payload = { ...formData, zona: zonaFinal };
+      if (isAdmin) {
+        payload.lat = parseFloat(formData.lat) || null;
+        payload.lng = parseFloat(formData.lng) || null;
+      } else {
+        delete payload.lat;
+        delete payload.lng;
+        delete payload.horario;
+      }
       if (punto?.id) await puntosAPI.update(punto.id, payload);
       else await puntosAPI.create(payload);
       onSuccess();
@@ -260,21 +273,22 @@ export default function PuntoForm({ punto, onSuccess, onCancel }) {
             required placeholder="Calle, número y barrio" style={inputBase} />
         )}
 
-        {/* Teléfono + Horario */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        {/* Teléfono + Horario (horario solo admin) */}
+        <div style={{ display: 'grid', gridTemplateColumns: isAdmin ? '1fr 1fr' : '1fr', gap: '1rem' }}>
           {field('Teléfono', true,
             <input type="tel" name="telefono" value={formData.telefono} onChange={handleChange}
               onFocus={onFocus} onBlur={onBlur}
               required placeholder="+54 9 11 1234-5678" style={inputBase} />
           )}
-          {field('Horario', false,
+          {isAdmin && field('Horario', false,
             <input type="text" name="horario" value={formData.horario} onChange={handleChange}
               onFocus={onFocus} onBlur={onBlur}
               placeholder="09:00 - 22:00" style={inputBase} />
           )}
         </div>
 
-        {/* Lat + Lng */}
+        {/* Lat + Lng (solo admin) */}
+        {isAdmin && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           {field('Latitud', true,
             <input type="number" name="lat" value={formData.lat} onChange={handleChange}
@@ -287,14 +301,17 @@ export default function PuntoForm({ punto, onSuccess, onCancel }) {
               step="0.000001" required placeholder="-58.381557" style={inputBase} />
           )}
         </div>
+        )}
 
-        {/* Mini-map */}
+        {/* Mini-map (solo admin) */}
+        {isAdmin && (
         <div>
           <div style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.muted, marginBottom: '0.4rem' }}>
             Ubicación en el mapa <span style={{ fontWeight: 500, fontSize: '0.6rem', textTransform: 'none', letterSpacing: 0, color: T.muted }}>clic para fijar coordenadas</span>
           </div>
           <div ref={miniMapRef} style={{ width: '100%', height: 210, borderRadius: 4, border: `1px solid ${T.border}`, overflow: 'hidden' }} />
         </div>
+        )}
 
         {error && (
           <div style={{ padding: '0.65rem 0.9rem', background: '#fef2f2', border: `1px solid #fca5a5`, borderRadius: 4, fontSize: '0.75rem', color: T.red, fontWeight: 600 }}>

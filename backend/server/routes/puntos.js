@@ -100,6 +100,43 @@ router.get('/', async (req, res) => {
   }
 });
 
+// ============ GET ALL (admin) — todos los estados ============
+router.get('/admin/all', verifyAdmin, async (req, res) => {
+  try {
+    const result = await db.execute({ sql: 'SELECT * FROM puntos_de_venta ORDER BY createdAt DESC', args: [] });
+    const puntos = result.rows.map(row => ({
+      id: row.id, nombre: row.nombre, zona: row.zona, direccion: row.direccion,
+      telefono: row.telefono, lat: row.lat, lng: row.lng, horario: row.horario,
+      estado: row.estado, createdAt: row.createdAt, updatedAt: row.updatedAt,
+    }));
+    res.json(puntos);
+  } catch (error) {
+    logger.error('Error al obtener todos los puntos', { error: error.message });
+    res.status(500).json({ error: 'Error al obtener datos' });
+  }
+});
+
+// ============ PATCH ESTADO (solo admin) ============
+router.patch('/:id/estado', verifyAdmin, validateParams(schemas.id), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estado } = req.body;
+    const estadosValidos = ['aprobado', 'pendiente', 'inactivo'];
+    if (!estadosValidos.includes(estado)) {
+      return res.status(400).json({ error: 'Estado inválido' });
+    }
+    const check = await db.execute(`SELECT id, nombre FROM puntos_de_venta WHERE id = ${id}`);
+    if (!check.rows.length) return res.status(404).json({ error: 'Punto no encontrado' });
+    await db.execute(`UPDATE puntos_de_venta SET estado = '${estado}', updatedAt = CURRENT_TIMESTAMP WHERE id = ${id}`);
+    auditLog('ESTADO', req.user?.email || 'unknown', 'punto_de_venta', id, { estado, nombre: check.rows[0].nombre });
+    logger.info('Estado actualizado', { id, estado });
+    res.json({ message: 'Estado actualizado' });
+  } catch (error) {
+    logger.error('Error al actualizar estado', { error: error.message });
+    res.status(500).json({ error: 'Error al actualizar estado' });
+  }
+});
+
 // ============ GET ONE PUNTO (público) ============
 router.get('/:id', validateParams(schemas.id), async (req, res) => {
   try {
@@ -141,6 +178,9 @@ router.post('/', verifyToken, createUpdateDeleteLimiter, validate(schemas.punto)
     logger.info('Creating punto with data', { nombre, zona, direccion, telefono, lat, lng });
 
     // Use direct SQL with string literals to avoid parameter binding issues
+    // Admin crea aprobado; vendedor crea pendiente
+    const estadoInicial = req.user?.role === 'admin' ? 'aprobado' : 'pendiente';
+
     const query = `
       INSERT INTO puntos_de_venta (nombre, zona, direccion, telefono, lat, lng, horario, estado)
       VALUES (
@@ -148,10 +188,10 @@ router.post('/', verifyToken, createUpdateDeleteLimiter, validate(schemas.punto)
         '${zona.replace(/'/g, "''")}',
         '${direccion.replace(/'/g, "''")}',
         '${telefono.replace(/'/g, "''")}',
-        ${lat},
-        ${lng},
+        ${lat != null && !isNaN(lat) ? lat : 'NULL'},
+        ${lng != null && !isNaN(lng) ? lng : 'NULL'},
         '${(horario || '').replace(/'/g, "''")}',
-        'aprobado'
+        '${estadoInicial}'
       )
     `;
 

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pazzi — Encontrá tu punto de venta</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+
+  <!-- Google Fonts: DM Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" />
+  <!-- Material Symbols -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+  <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Tokens (mismos que el panel) ── */
+    :root {
+      --yellow:  #ffb800;
+      --yHover:  #e6a500;
+      --ink:     #111827;
+      --muted:   #6b7280;
+      --border:  #e5e7eb;
+      --surface: #f9fafb;
+      --card:    #ffffff;
+    }
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--surface);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .pz-header {
+      height: 50px;
+      flex-shrink: 0;
+      background: var(--yellow);
+      border-bottom: 1px solid var(--yHover);
+      display: flex;
+      align-items: center;
+      padding: 0 1.25rem;
+      gap: 0.75rem;
+      z-index: 300;
+    }
+    .pz-header-brand {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+    .pz-header-divider {
+      width: 1px; height: 16px;
+      background: rgba(0,0,0,0.18);
+    }
+    .pz-header-sub {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: rgba(0,0,0,0.45);
+    }
+    .pz-header-count {
+      margin-left: auto;
+      font-size: 0.62rem;
+      font-weight: 600;
+      color: rgba(0,0,0,0.4);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    /* ── Body split ── */
+    .pz-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar list ── */
+    .pz-sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Search */
+    .pz-search {
+      padding: 0.7rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-shrink: 0;
+    }
+    .pz-search .ms {
+      font-family: 'Material Symbols Outlined';
+      font-size: 1rem;
+      color: var(--muted);
+      font-style: normal;
+      font-weight: normal;
+      line-height: 1;
+    }
+    .pz-search input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 0.75rem;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      color: var(--ink);
+    }
+    .pz-search input::placeholder { color: var(--muted); }
+
+    /* Filter chips */
+    .pz-chips {
+      padding: 0.5rem 0.75rem;
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .pz-chip {
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.55rem;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s, border-color 0.1s;
+      font-family: 'DM Sans', system-ui, sans-serif;
+    }
+    .pz-chip.active {
+      background: var(--yellow);
+      color: var(--ink);
+      border-color: var(--yHover);
+    }
+
+    /* List */
+    .pz-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .pz-item {
+      padding: 0.75rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .pz-item:hover, .pz-item.active { background: #fff7ed; }
+    .pz-item-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 0.15rem;
+    }
+    .pz-item-meta {
+      font-size: 0.66rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .pz-item-meta .ms {
+      font-family: 'Material Symbols Outlined';
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-style: normal;
+      font-weight: normal;
+      line-height: 1;
+    }
+    .pz-item-zona {
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    /* Empty/loading state */
+    .pz-list-empty {
+      padding: 2.5rem 1rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    /* ── Map ── */
+    #map {
+      flex: 1;
+      z-index: 1;
+    }
+
+    /* ── Popup override ── */
+    .leaflet-popup-content-wrapper {
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      font-family: 'DM Sans', system-ui, sans-serif;
+      padding: 0;
+      overflow: hidden;
+    }
+    .leaflet-popup-content {
+      margin: 0;
+      width: 220px !important;
+    }
+    .pz-popup {
+      padding: 0.9rem 1rem;
+    }
+    .pz-popup-name {
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 0.5rem;
+    }
+    .pz-popup-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.35rem;
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+    }
+    .pz-popup-row .ms {
+      font-family: 'Material Symbols Outlined';
+      font-size: 0.8rem;
+      flex-shrink: 0;
+      margin-top: 1px;
+      font-style: normal;
+      font-weight: normal;
+      line-height: 1;
+    }
+    .pz-popup-zona {
+      margin-top: 0.5rem;
+      display: inline-block;
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: #fff7ed;
+      color: #c2410c;
+      padding: 0.15rem 0.45rem;
+      border-radius: 3px;
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 640px) {
+      .pz-sidebar { display: none; }
+    }
+
+    /* ── Scrollbar ── */
+    .pz-list::-webkit-scrollbar { width: 4px; }
+    .pz-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+  <header class="pz-header">
+    <span class="pz-header-brand">Pazzi</span>
+    <div class="pz-header-divider"></div>
+    <span class="pz-header-sub">Encontrá tu punto de venta</span>
+    <span class="pz-header-count" id="header-count"></span>
+  </header>
+
+  <div class="pz-body">
+
+    <aside class="pz-sidebar">
+      <div class="pz-search">
+        <span class="ms">search</span>
+        <input type="text" id="search-input" placeholder="Buscar por nombre o dirección..." />
+      </div>
+      <div class="pz-chips" id="chips-container"></div>
+      <div class="pz-list" id="puntos-list">
+        <div class="pz-list-empty">Cargando puntos…</div>
+      </div>
+    </aside>
+
+    <div id="map"></div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+  <script>
+    // ── Config ──────────────────────────────────────────────
+    // En producción reemplazar con la URL real del backend
+    const API_URL = (window.PAZZI_API_URL || 'http://localhost:3000') + '/api/puntos';
+
+    // ── Estado ──────────────────────────────────────────────
+    let allPuntos  = [];
+    let zonaActiva = 'Todas';
+    let searchTerm = '';
+    let activeId   = null;
+    let markers    = {};
+
+    // ── Marcador amarillo (mismo que PuntoForm.jsx) ──────────
+    const yellowIcon = (active = false) => L.divIcon({
+      html: `<div style="
+        width:${active ? 24 : 20}px;
+        height:${active ? 24 : 20}px;
+        border-radius: 50% 50% 50% 0;
+        background: #ffb800;
+        border: 2px solid ${active ? '#111827' : '#c2410c'};
+        transform: rotate(-45deg);
+        box-shadow: 0 2px 6px rgba(0,0,0,${active ? '0.35' : '0.25'});
+        transition: all 0.15s;
+      "></div>`,
+      className: '',
+      iconSize:    [active ? 24 : 20, active ? 24 : 20],
+      iconAnchor:  [active ? 12 : 10, active ? 24 : 20],
+      popupAnchor: [0, -24],
+    });
+
+    // ── Init Leaflet ─────────────────────────────────────────
+    const map = L.map('map', { center: [-38, -63], zoom: 5 });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(map);
+
+    // ── Popup HTML ───────────────────────────────────────────
+    function popupHTML(p) {
+      const dir  = p.direccion ? `<div class="pz-popup-row"><span class="ms">location_on</span>${p.direccion}</div>` : '';
+      const tel  = p.telefono  ? `<div class="pz-popup-row"><span class="ms">call</span>${p.telefono}</div>` : '';
+      const hor  = p.horario   ? `<div class="pz-popup-row"><span class="ms">schedule</span>${p.horario}</div>` : '';
+      const zona = p.zona      ? `<div><span class="pz-popup-zona">${p.zona}</span></div>` : '';
+      return `<div class="pz-popup">
+        <div class="pz-popup-name">${p.nombre}</div>
+        ${dir}${tel}${hor}${zona}
+      </div>`;
+    }
+
+    // ── Activar punto ────────────────────────────────────────
+    function activate(id) {
+      if (activeId && markers[activeId]) markers[activeId].setIcon(yellowIcon(false));
+      activeId = id;
+      if (markers[id]) {
+        markers[id].setIcon(yellowIcon(true));
+        markers[id].openPopup();
+        const p = allPuntos.find(x => x.id === id);
+        if (p?.lat && p?.lng) map.setView([p.lat, p.lng], Math.max(map.getZoom(), 13), { animate: true });
+      }
+      // Update list highlight
+      document.querySelectorAll('.pz-item').forEach(el => {
+        el.classList.toggle('active', Number(el.dataset.id) === id);
+      });
+    }
+
+    // ── Render marcadores ────────────────────────────────────
+    function renderMarkers(puntos) {
+      // Limpiar existentes
+      Object.values(markers).forEach(m => map.removeLayer(m));
+      markers = {};
+
+      puntos.forEach(p => {
+        if (!p.lat || !p.lng) return;
+        const m = L.marker([p.lat, p.lng], { icon: yellowIcon(false) })
+          .bindPopup(popupHTML(p), { maxWidth: 240 })
+          .addTo(map);
+        m.on('click', () => activate(p.id));
+        markers[p.id] = m;
+      });
+    }
+
+    // ── Render lista ─────────────────────────────────────────
+    function renderList(puntos) {
+      const list = document.getElementById('puntos-list');
+      if (!puntos.length) {
+        list.innerHTML = `<div class="pz-list-empty">Sin resultados.</div>`;
+        return;
+      }
+      list.innerHTML = puntos.map(p => `
+        <div class="pz-item${p.id === activeId ? ' active' : ''}" data-id="${p.id}">
+          <div class="pz-item-name">${p.nombre}</div>
+          ${p.direccion ? `<div class="pz-item-meta"><span class="ms">location_on</span>${p.direccion}</div>` : ''}
+          ${p.zona ? `<div class="pz-item-zona">${p.zona}</div>` : ''}
+        </div>
+      `).join('');
+      list.querySelectorAll('.pz-item').forEach(el => {
+        el.addEventListener('click', () => activate(Number(el.dataset.id)));
+      });
+    }
+
+    // ── Chips de zona ────────────────────────────────────────
+    function buildChips(puntos) {
+      const zonas = ['Todas', ...new Set(puntos.map(p => p.zona).filter(Boolean).sort())];
+      const container = document.getElementById('chips-container');
+      container.innerHTML = zonas.map(z => `
+        <button class="pz-chip${z === zonaActiva ? ' active' : ''}" data-zona="${z}">${z}</button>
+      `).join('');
+      container.querySelectorAll('.pz-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          zonaActiva = btn.dataset.zona;
+          container.querySelectorAll('.pz-chip').forEach(b => b.classList.toggle('active', b.dataset.zona === zonaActiva));
+          applyFilters();
+        });
+      });
+    }
+
+    // ── Filtro combinado ─────────────────────────────────────
+    function applyFilters() {
+      let filtered = allPuntos;
+      if (zonaActiva !== 'Todas') filtered = filtered.filter(p => p.zona === zonaActiva);
+      if (searchTerm)             filtered = filtered.filter(p =>
+        p.nombre?.toLowerCase().includes(searchTerm) ||
+        p.direccion?.toLowerCase().includes(searchTerm)
+      );
+      renderList(filtered);
+      renderMarkers(filtered);
+      document.getElementById('header-count').textContent =
+        `${filtered.length} punto${filtered.length !== 1 ? 's' : ''}`;
+    }
+
+    // ── Búsqueda ─────────────────────────────────────────────
+    document.getElementById('search-input').addEventListener('input', e => {
+      searchTerm = e.target.value.toLowerCase().trim();
+      applyFilters();
+    });
+
+    // ── Fetch puntos ─────────────────────────────────────────
+    async function loadPuntos() {
+      try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        allPuntos = await res.json();
+        buildChips(allPuntos);
+        applyFilters();
+      } catch (err) {
+        document.getElementById('puntos-list').innerHTML =
+          `<div class="pz-list-empty">Error al cargar los puntos.</div>`;
+        console.error('Error fetching puntos:', err);
+      }
+    }
+
+    loadPuntos();
+  </script>
+</body>
+</html>

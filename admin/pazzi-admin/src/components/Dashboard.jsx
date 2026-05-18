@@ -59,15 +59,15 @@ export default function Dashboard({ puntos, refresh, setPuntos, onGoToPuntos, on
       {/* ── Summary cards ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
         <div style={{ ...cardStyle, borderLeft: `3px solid ${T.ink}` }}>
-          <div style={labelStyle}>Puntos totales</div>
+          <div style={labelStyle}>Puntos de Venta Totales</div>
           <div style={statStyle}>{total}</div>
         </div>
         <div style={{ ...cardStyle, borderLeft: `3px solid ${T.green}` }}>
-          <div style={{ ...labelStyle, color: T.green }}>Activos</div>
+          <div style={{ ...labelStyle, color: T.green }}>Puntos de Venta Activos</div>
           <div style={{ ...statStyle, color: T.green }}>{activos}</div>
         </div>
         <div style={{ ...cardStyle, borderLeft: `3px solid ${T.muted}` }}>
-          <div style={labelStyle}>Pendientes / inactivos</div>
+          <div style={labelStyle}>Puntos de Venta Pendientes / Inactivos</div>
           <div style={{ ...statStyle, color: T.muted }}>{inactivos}</div>
         </div>
       </div>
