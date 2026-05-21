@@ -11,17 +11,24 @@ import logger, { auditLog, securityLog } from '../utils/logger.js';
 dotenv.config();
 const router = express.Router();
 
+const envValue = (key) => process.env[key]?.trim();
+const normalizeEmail = (value) => value?.trim().toLowerCase();
+
 // ============ LOGIN ============
 router.post('/login', loginLimiter, validate(schemas.login), async (req, res) => {
   try {
     const { email, password } = req.body;
+    const requestedEmail = normalizeEmail(email);
 
     // Determinar qué rol corresponde al email
     let role = null;
-    if (email === process.env.ADMIN_EMAIL) {
+    let accountEmail = null;
+    if (requestedEmail === normalizeEmail(envValue('ADMIN_EMAIL'))) {
       role = 'admin';
-    } else if (email === process.env.VENDEDOR_EMAIL) {
+      accountEmail = envValue('ADMIN_EMAIL');
+    } else if (requestedEmail === normalizeEmail(envValue('VENDEDOR_EMAIL'))) {
       role = 'vendedor';
+      accountEmail = envValue('VENDEDOR_EMAIL');
     } else {
       securityLog('Failed login attempt', { email, reason: 'email_mismatch' });
       return res.status(401).json({ error: 'Credenciales inválidas' });
@@ -32,17 +39,17 @@ router.post('/login', loginLimiter, validate(schemas.login), async (req, res) =>
     const isDev = process.env.NODE_ENV === 'development';
 
     if (role === 'admin') {
-      if (isDev && process.env.ADMIN_PASSWORD_PLAIN) {
-        isValidPassword = password === process.env.ADMIN_PASSWORD_PLAIN;
+      if (isDev && envValue('ADMIN_PASSWORD_PLAIN')) {
+        isValidPassword = password === envValue('ADMIN_PASSWORD_PLAIN');
         if (isValidPassword) logger.warn('⚠️  Login con ADMIN_PASSWORD_PLAIN (modo desarrollo).');
       } else {
-        isValidPassword = await verifyPassword(password, process.env.ADMIN_PASSWORD_HASH);
+        isValidPassword = await verifyPassword(password, envValue('ADMIN_PASSWORD_HASH'));
       }
     } else if (role === 'vendedor') {
-      if (isDev && process.env.VENDEDOR_PASSWORD_PLAIN) {
-        isValidPassword = password === process.env.VENDEDOR_PASSWORD_PLAIN;
+      if (isDev && envValue('VENDEDOR_PASSWORD_PLAIN')) {
+        isValidPassword = password === envValue('VENDEDOR_PASSWORD_PLAIN');
       } else {
-        isValidPassword = await verifyPassword(password, process.env.VENDEDOR_PASSWORD_HASH);
+        isValidPassword = await verifyPassword(password, envValue('VENDEDOR_PASSWORD_HASH'));
       }
     }
 
@@ -54,18 +61,18 @@ router.post('/login', loginLimiter, validate(schemas.login), async (req, res) =>
     // Generar JWT con expiración desde .env
     const expirationHours = process.env.JWT_EXPIRATION || 2;
     const token = jwt.sign(
-      { email, role },
+      { email: accountEmail, role },
       process.env.JWT_SECRET,
       { expiresIn: `${expirationHours}h` }
     );
 
-    auditLog('Login', email, role, null, { success: true });
-    logger.info('Successful login', { email, role });
+    auditLog('Login', accountEmail, role, null, { success: true });
+    logger.info('Successful login', { email: accountEmail, role });
 
     return res.json({
       message: 'Login exitoso',
       token,
-      admin: { email, role },
+      admin: { email: accountEmail, role },
     });
   } catch (error) {
     logger.error('Error en login', { error: error.message });
