@@ -87,13 +87,7 @@ export const schemas = {
         'number.min': 'Longitud debe estar entre -180 y 180',
         'number.max': 'Longitud debe estar entre -180 y 180',
       }),
-    horario: Joi.string()
-      .trim()
-      .max(100)
-      .allow('')
-      .messages({
-        'string.max': 'Horario no puede exceder 100 caracteres',
-      }),
+
   }),
 
   /**

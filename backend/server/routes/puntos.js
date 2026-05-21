@@ -88,7 +88,6 @@ router.get('/', async (req, res) => {
       telefono: row.telefono,
       lat: row.lat,
       lng: row.lng,
-      horario: row.horario,
       estado: row.estado,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -100,13 +99,29 @@ router.get('/', async (req, res) => {
   }
 });
 
+// ============ GET PENDIENTES (vendedor) — sus propias solicitudes ============
+router.get('/vendedor/pendientes', verifyToken, async (req, res) => {
+  try {
+    const result = await db.execute({ sql: "SELECT * FROM puntos_de_venta WHERE estado = 'pendiente' ORDER BY createdAt DESC", args: [] });
+    const puntos = result.rows.map(row => ({
+      id: row.id, nombre: row.nombre, zona: row.zona, direccion: row.direccion,
+      telefono: row.telefono, lat: row.lat, lng: row.lng,
+      estado: row.estado, createdAt: row.createdAt, updatedAt: row.updatedAt,
+    }));
+    res.json(puntos);
+  } catch (error) {
+    logger.error('Error al obtener pendientes', { error: error.message });
+    res.status(500).json({ error: 'Error al obtener datos' });
+  }
+});
+
 // ============ GET ALL (admin) — todos los estados ============
 router.get('/admin/all', verifyAdmin, async (req, res) => {
   try {
     const result = await db.execute({ sql: 'SELECT * FROM puntos_de_venta ORDER BY createdAt DESC', args: [] });
     const puntos = result.rows.map(row => ({
       id: row.id, nombre: row.nombre, zona: row.zona, direccion: row.direccion,
-      telefono: row.telefono, lat: row.lat, lng: row.lng, horario: row.horario,
+      telefono: row.telefono, lat: row.lat, lng: row.lng,
       estado: row.estado, createdAt: row.createdAt, updatedAt: row.updatedAt,
     }));
     res.json(puntos);
@@ -158,7 +173,6 @@ router.get('/:id', validateParams(schemas.id), async (req, res) => {
       telefono: row.telefono,
       lat: row.lat,
       lng: row.lng,
-      horario: row.horario,
       estado: row.estado,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -173,16 +187,16 @@ router.get('/:id', validateParams(schemas.id), async (req, res) => {
 // ============ CREATE PUNTO (solo admin) ============
 router.post('/', verifyToken, createUpdateDeleteLimiter, validate(schemas.punto), async (req, res) => {
   try {
-    const { nombre, zona, direccion, telefono, lat, lng, horario } = req.body;
+    const { nombre, zona, direccion, telefono, lat, lng } = req.body;
 
     logger.info('Creating punto with data', { nombre, zona, direccion, telefono, lat, lng });
 
     // Use direct SQL with string literals to avoid parameter binding issues
     // Admin crea aprobado; vendedor crea pendiente
-    const estadoInicial = req.user?.role === 'admin' ? 'aprobado' : 'pendiente';
+    const estadoInicial = req.admin?.role === 'admin' ? 'aprobado' : 'pendiente';
 
     const query = `
-      INSERT INTO puntos_de_venta (nombre, zona, direccion, telefono, lat, lng, horario, estado)
+      INSERT INTO puntos_de_venta (nombre, zona, direccion, telefono, lat, lng, estado)
       VALUES (
         '${nombre.replace(/'/g, "''")}',
         '${zona.replace(/'/g, "''")}',
@@ -190,7 +204,6 @@ router.post('/', verifyToken, createUpdateDeleteLimiter, validate(schemas.punto)
         '${telefono.replace(/'/g, "''")}',
         ${lat != null && !isNaN(lat) ? lat : 'NULL'},
         ${lng != null && !isNaN(lng) ? lng : 'NULL'},
-        '${(horario || '').replace(/'/g, "''")}',
         '${estadoInicial}'
       )
     `;
@@ -219,7 +232,7 @@ router.post('/', verifyToken, createUpdateDeleteLimiter, validate(schemas.punto)
 // ============ UPDATE PUNTO (solo admin) ============
 router.put('/:id', verifyAdmin, createUpdateDeleteLimiter, validateParams(schemas.id), validate(schemas.punto), async (req, res) => {
   try {
-    const { nombre, zona, direccion, telefono, lat, lng, horario } = req.body;
+    const { nombre, zona, direccion, telefono, lat, lng } = req.body;
     const { id } = req.params;
 
     logger.info('Updating punto', { id, nombre, zona });
@@ -250,7 +263,6 @@ router.put('/:id', verifyAdmin, createUpdateDeleteLimiter, validateParams(schema
         telefono = '${(telefono || row.telefono).replace(/'/g, "''")}',
         lat = ${lat !== undefined ? lat : row.lat},
         lng = ${lng !== undefined ? lng : row.lng},
-        horario = '${(horario || row.horario || '').replace(/'/g, "''")}',
         estado = 'aprobado',
         updatedAt = CURRENT_TIMESTAMP
       WHERE id = ${id}

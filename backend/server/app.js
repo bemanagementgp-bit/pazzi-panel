@@ -49,7 +49,7 @@ const allowedOrigins = process.env.FRONTEND_URLS
 app.use(cors({
   origin: allowedOrigins,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   maxAge: 3600, // Cachear CORS preflight por 1 hora
 }));
