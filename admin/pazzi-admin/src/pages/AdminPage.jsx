@@ -5,6 +5,9 @@ import PuntoForm from '../components/PuntoForm.jsx';
 import ConfirmDelete from '../components/ConfirmDelete.jsx';
 import Dashboard from '../components/Dashboard.jsx';
 import MapaView from '../components/MapaView.jsx';
+import SolicitudesView from '../components/SolicitudesView.jsx';
+import MisSolicitudesView from '../components/MisSolicitudesView.jsx';
+import ExcelImportExport from '../components/ExcelImportExport.jsx';
 import logo from '../assets/logo.png';
 
 /* -- Design tokens ------------------------------- */
@@ -21,12 +24,16 @@ const T = {
 };
 
 const NAV_ADMIN = [
-  { id: 'dashboard', label: 'Dashboard',       icon: 'dashboard' },
-  { id: 'puntos',    label: 'Puntos de Venta', icon: 'storefront' },
-  { id: 'mapa',      label: 'Mapa',            icon: 'map' },
+  { id: 'dashboard',    label: 'Dashboard',       icon: 'dashboard' },
+  { id: 'puntos',       label: 'Puntos de Venta', icon: 'storefront' },
+  { id: 'mapa',         label: 'Mapa',            icon: 'map' },
+  { id: 'solicitudes',  label: 'Solicitudes',     icon: 'pending_actions' },
 ];
 const NAV_VENDEDOR = [
-  { id: 'puntos', label: 'Mis puntos', icon: 'storefront' },
+  { id: 'dashboard',    label: 'Dashboard',       icon: 'dashboard' },
+  { id: 'puntos',       label: 'Puntos de Venta', icon: 'storefront' },
+  { id: 'mapa',         label: 'Mapa',            icon: 'map' },
+  { id: 'mis-solic',    label: 'Mis solicitudes', icon: 'pending_actions' },
 ];
 
 export default function AdminPage({ admin, onLogout, isAdmin }) {
@@ -40,15 +47,6 @@ export default function AdminPage({ admin, onLogout, isAdmin }) {
 
   const handleEdit   = (punto) => { setSelectedPunto(punto); setShowForm(true); };
   const handleDelete = (id)    => setDeleteConfirm(puntos.find(p => p.id === id));
-
-  const handleApprove = async (id) => {
-    try {
-      await puntosAPI.updateEstado(id, 'aprobado');
-      setRefresh(prev => prev + 1);
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const confirmDelete = async () => {
     if (!deleteConfirm) return;
@@ -77,11 +75,19 @@ export default function AdminPage({ admin, onLogout, isAdmin }) {
   const roleLabel    = adminRole === 'admin' ? 'Administrador' : 'Vendedor';
   const NAV          = adminRole === 'admin' ? NAV_ADMIN : NAV_VENDEDOR;
 
-  const sectionTitle = { dashboard: 'Dashboard', puntos: adminRole === 'admin' ? 'Puntos de Venta' : 'Mis puntos', mapa: 'Mapa de puntos' };
-  const sectionSub   = {
-    dashboard: 'Resumen general de la operación',
-    puntos:    adminRole === 'admin' ? 'Gestión de sucursales — incluye pendientes de aprobación' : 'Puntos que registraste',
-    mapa:      'Distribución geográfica de puntos',
+  const sectionTitle = {
+    dashboard:   'Dashboard',
+    puntos:      adminRole === 'admin' ? 'Puntos de Venta' : 'Puntos de Venta Activos',
+    mapa:        'Mapa de puntos',
+    solicitudes: 'Solicitudes',
+    'mis-solic': 'Mis solicitudes',
+  };
+  const sectionSub = {
+    dashboard:   'Resumen general de la operación',
+    puntos:      adminRole === 'admin' ? 'Gestión de sucursales — incluye pendientes de aprobación' : 'Puntos de venta aprobados y activos',
+    mapa:        'Distribución geográfica de puntos',
+    solicitudes: 'Puntos de venta enviados por vendedores — aprobá o rechazá cada solicitud',
+    'mis-solic': 'Puntos que enviaste y están esperando aprobación',
   };
 
   return (
@@ -382,17 +388,17 @@ export default function AdminPage({ admin, onLogout, isAdmin }) {
                 <div className="pz-panel">
                   <div className="pz-panel-head">
                     <div>
-                      <div className="pz-panel-label">Todos los puntos</div>
+                      <div className="pz-panel-label">{isAdmin ? 'Todos los puntos' : 'Mis puntos activos'}</div>
                       <div className="pz-panel-count">
                         {puntos.length} punto{puntos.length !== 1 ? 's' : ''} registrado{puntos.length !== 1 ? 's' : ''}
                       </div>
                     </div>
+                    <ExcelImportExport isAdmin={isAdmin} onImportDone={() => setRefresh(prev => prev + 1)} />
                   </div>
                   <PuntosTable
                     refresh={refresh}
                     onEdit={isAdmin ? handleEdit : null}
                     onDelete={isAdmin ? handleDelete : null}
-                    onApprove={isAdmin ? handleApprove : null}
                     setPuntos={setPuntos}
                     isAdmin={isAdmin}
                     emptySlot={
@@ -411,6 +417,17 @@ export default function AdminPage({ admin, onLogout, isAdmin }) {
 
               {section === 'mapa' && (
                 <MapaView puntos={puntos} refresh={refresh} setPuntos={setPuntos} />
+              )}
+
+              {section === 'solicitudes' && (
+                <SolicitudesView
+                  refresh={refresh}
+                  onRefresh={() => setRefresh(prev => prev + 1)}
+                />
+              )}
+
+              {section === 'mis-solic' && (
+                <MisSolicitudesView refresh={refresh} />
               )}
 
             </div>

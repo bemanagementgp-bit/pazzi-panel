@@ -19,7 +19,7 @@ const ESTADO = {
   inactivo:  { bg: '#fef2f2', color: '#b91c1c', label: 'Inactivo'  },
 };
 
-export default function PuntosTable({ refresh, onEdit, onDelete, onApprove, setPuntos, emptySlot, isAdmin }) {
+export default function PuntosTable({ refresh, onEdit, onDelete, setPuntos, emptySlot, isAdmin }) {
   const [puntos, setPuntosLocal] = useState([]);
   const [loading, setLoading]    = useState(true);
   const [search, setSearch]      = useState('');
@@ -130,7 +130,7 @@ export default function PuntosTable({ refresh, onEdit, onDelete, onApprove, setP
               <th style={thStyle}>Zona</th>
               <th style={thStyle}>Dirección</th>
               <th style={thStyle}>Teléfono</th>
-              <th style={thStyle}>Horario</th>
+
               <th style={thStyle}>Estado</th>
               {isAdmin && <th style={{ ...thStyle, textAlign: 'right' }}>Acciones</th>}
             </tr>
@@ -156,7 +156,7 @@ export default function PuntosTable({ refresh, onEdit, onDelete, onApprove, setP
                   <td style={tdStyle}>{punto.zona || '—'}</td>
                   <td style={{ ...tdStyle, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>{punto.direccion || '—'}</td>
                   <td style={tdStyle}>{punto.telefono || '—'}</td>
-                  <td style={tdStyle}>{punto.horario || '—'}</td>
+
                   <td style={tdStyle}>
                     <span style={{
                       display: 'inline-flex', alignItems: 'center',
@@ -172,23 +172,6 @@ export default function PuntosTable({ refresh, onEdit, onDelete, onApprove, setP
                   {isAdmin && (
                   <td style={{ ...tdStyle, textAlign: 'right' }}>
                     <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
-                      {punto.estado === 'pendiente' && (
-                        <button
-                          onClick={() => onApprove(punto.id)}
-                          title="Aprobar"
-                          style={{
-                            width: 30, height: 30, border: `1px solid ${T.border}`,
-                            borderRadius: 7, background: 'transparent', cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            color: T.muted, fontFamily: 'Material Symbols Outlined', fontSize: '0.9rem',
-                            transition: 'background 0.1s, color 0.1s',
-                          }}
-                          onMouseEnter={e => { e.currentTarget.style.background = '#f0fdf4'; e.currentTarget.style.color = T.green; e.currentTarget.style.borderColor = '#86efac'; }}
-                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.muted; e.currentTarget.style.borderColor = T.border; }}
-                        >
-                          check_circle
-                        </button>
-                      )}
                       <button
                         onClick={() => onEdit(punto)}
                         title="Editar"

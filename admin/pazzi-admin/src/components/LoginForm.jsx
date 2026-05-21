@@ -11,6 +11,7 @@ export default function LoginForm({ onLoginSuccess }) {
   const [loading, setLoading]   = useState(false);
   const [focused, setFocused]   = useState(null);
   const [showPwd, setShowPwd]   = useState(false);
+  const isDevelopment = import.meta.env.DEV;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -150,6 +151,40 @@ export default function LoginForm({ onLoginSuccess }) {
               <button type="submit" disabled={loading} className="lp-btn">
                 {loading ? "Ingresando..." : "Ingresar al panel"}
               </button>
+
+              {isDevelopment && (
+                <div style={{ marginTop: '1.25rem', padding: '0.75rem', background: '#fffbeb', border: '1px dashed #f59e0b', borderRadius: 4 }}>
+                  <p style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#92400e', marginBottom: '0.55rem' }}>
+                    Acceso rapido (solo desarrollo)
+                  </p>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => { setEmail('Adminpazzi@gmail.com'); setPassword('PazziAdmin#2026!'); }}
+                      style={{
+                        flex: 1, padding: '0.45rem 0.6rem', borderRadius: 4,
+                        border: '1px solid #d97706', background: '#fef3c7',
+                        fontSize: '0.68rem', fontWeight: 700, color: '#92400e',
+                        cursor: 'pointer', fontFamily: "'DM Sans', system-ui, sans-serif",
+                      }}
+                    >
+                      Admin
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setEmail('Pazzivende@gmail.com'); setPassword('PazziVend#2026!'); }}
+                      style={{
+                        flex: 1, padding: '0.45rem 0.6rem', borderRadius: 4,
+                        border: '1px solid #d97706', background: '#fef3c7',
+                        fontSize: '0.68rem', fontWeight: 700, color: '#92400e',
+                        cursor: 'pointer', fontFamily: "'DM Sans', system-ui, sans-serif",
+                      }}
+                    >
+                      Vendedor
+                    </button>
+                  </div>
+                </div>
+              )}
             </form>
             <p style={{ marginTop: "1.75rem", fontSize: "0.68rem", color: "#9ca3af", textAlign: "center", lineHeight: 1.6 }}>
               Problemas para ingresar?{" "}

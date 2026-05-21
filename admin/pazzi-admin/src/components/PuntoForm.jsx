@@ -17,10 +17,12 @@ const ZONAS = [];
 
 export default function PuntoForm({ punto, onSuccess, onCancel, isAdmin }) {
   const [formData, setFormData] = useState({
-    nombre: '', zona: '', direccion: '', telefono: '', lat: '', lng: '', horario: '',
+    nombre: '', zona: '', direccion: '', telefono: '', lat: '', lng: '',
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
+  const [geocoding, setGeocoding] = useState(false);
+  const [geoMsg, setGeoMsg]     = useState('');
   const [zonaSearch, setZonaSearch]   = useState('');
   const [zonaOpen, setZonaOpen]       = useState(false);
   const zonaRef = useRef(null);
@@ -115,6 +117,29 @@ export default function PuntoForm({ punto, onSuccess, onCancel, isAdmin }) {
     map.panTo([lat, lng]);
   }, [formData.lat, formData.lng]);
 
+  const geocodeAddress = async () => {
+    const query = [formData.direccion, formData.zona || zonaSearch].filter(Boolean).join(', ');
+    if (!query.trim()) return;
+    setGeocoding(true);
+    setGeoMsg('');
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
+      const res = await fetch(url, { headers: { 'Accept-Language': 'es', 'User-Agent': 'PazziPanel/1.0' } });
+      const data = await res.json();
+      if (data.length > 0) {
+        const { lat, lon } = data[0];
+        setFormData(prev => ({ ...prev, lat: parseFloat(lat).toFixed(7), lng: parseFloat(lon).toFixed(7) }));
+        setGeoMsg('✓ Ubicación encontrada');
+      } else {
+        setGeoMsg('No se encontró la dirección. Intentá ser más específico.');
+      }
+    } catch {
+      setGeoMsg('Error al buscar. Verificá tu conexión.');
+    } finally {
+      setGeocoding(false);
+    }
+  };
+
   const zonaFiltered = (() => {
     const normalize = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
     const q = normalize(zonaSearch);
@@ -150,7 +175,6 @@ export default function PuntoForm({ punto, onSuccess, onCancel, isAdmin }) {
       } else {
         delete payload.lat;
         delete payload.lng;
-        delete payload.horario;
       }
       if (punto?.id) await puntosAPI.update(punto.id, payload);
       else await puntosAPI.create(payload);
@@ -267,25 +291,48 @@ export default function PuntoForm({ punto, onSuccess, onCancel, isAdmin }) {
         </div>
 
         {/* Dirección */}
-        {field('Dirección', true,
-          <input type="text" name="direccion" value={formData.direccion} onChange={handleChange}
-            onFocus={onFocus} onBlur={onBlur}
-            required placeholder="Calle, número y barrio" style={inputBase} />
-        )}
-
-        {/* Teléfono + Horario (horario solo admin) */}
-        <div style={{ display: 'grid', gridTemplateColumns: isAdmin ? '1fr 1fr' : '1fr', gap: '1rem' }}>
-          {field('Teléfono', true,
-            <input type="tel" name="telefono" value={formData.telefono} onChange={handleChange}
+        <div>
+          {label('Dirección', true)}
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input type="text" name="direccion" value={formData.direccion} onChange={handleChange}
               onFocus={onFocus} onBlur={onBlur}
-              required placeholder="+54 9 11 1234-5678" style={inputBase} />
-          )}
-          {isAdmin && field('Horario', false,
-            <input type="text" name="horario" value={formData.horario} onChange={handleChange}
-              onFocus={onFocus} onBlur={onBlur}
-              placeholder="09:00 - 22:00" style={inputBase} />
+              required placeholder="Calle, número y barrio" style={{ ...inputBase, flex: 1 }} />
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={geocodeAddress}
+                disabled={geocoding || !formData.direccion}
+                title="Buscar coordenadas automáticamente"
+                style={{
+                  padding: '0.5rem 0.85rem',
+                  background: geocoding ? '#e5e7eb' : T.yellow,
+                  color: T.ink, border: 'none', borderRadius: 4,
+                  fontFamily: "'DM Sans', system-ui, sans-serif",
+                  fontSize: '0.72rem', fontWeight: 800,
+                  cursor: (geocoding || !formData.direccion) ? 'not-allowed' : 'pointer',
+                  whiteSpace: 'nowrap',
+                  opacity: !formData.direccion ? 0.5 : 1,
+                  transition: 'background 0.12s',
+                }}
+              >
+                {geocoding ? 'Buscando...' : '📍 Buscar en mapa'}
+              </button>
+            )}
+          </div>
+          {isAdmin && geoMsg && (
+            <div style={{
+              marginTop: '0.3rem', fontSize: '0.66rem', fontWeight: 600,
+              color: geoMsg.startsWith('✓') ? '#16a34a' : '#dc2626',
+            }}>{geoMsg}</div>
           )}
         </div>
+
+        {/* Teléfono */}
+        {field('Teléfono', true,
+          <input type="tel" name="telefono" value={formData.telefono} onChange={handleChange}
+            onFocus={onFocus} onBlur={onBlur}
+            required placeholder="+54 9 11 1234-5678" style={inputBase} />
+        )}
 
         {/* Lat + Lng (solo admin) */}
         {isAdmin && (
