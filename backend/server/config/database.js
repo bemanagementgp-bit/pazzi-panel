@@ -4,11 +4,23 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 console.log('🔗 Conectando a Turso...');
-console.log('URL:', process.env.TURSO_CONNECTION_URL);
+
+const tursoConnectionUrl = process.env.TURSO_CONNECTION_URL?.trim();
+const tursoAuthToken = process.env.TURSO_AUTH_TOKEN?.trim();
+
+if (!tursoConnectionUrl || !tursoConnectionUrl.startsWith('libsql://')) {
+  throw new Error('TURSO_CONNECTION_URL inválida. En Render debe empezar con libsql://');
+}
+
+if (!tursoAuthToken) {
+  throw new Error('TURSO_AUTH_TOKEN faltante. Configura el token real de Turso en Render.');
+}
+
+console.log('URL:', tursoConnectionUrl.replace(/^(libsql:\/\/[^.]+).*/, '$1...'));
 
 const db = createClient({
-  url: process.env.TURSO_CONNECTION_URL,
-  authToken: process.env.TURSO_AUTH_TOKEN,
+  url: tursoConnectionUrl,
+  authToken: tursoAuthToken,
 });
 
 // Inicializar tabla
