@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import { puntosAPI } from '../services/api.js';
+import { normalizeArgPhone } from '../utils/phone.js';
 
 const T = {
   ink:    '#111827',
@@ -19,6 +20,25 @@ const HEADERS = {
   zona:      'Zona / Barrio',
   direccion: 'Dirección completa',
   telefono:  'Teléfono',
+};
+
+// === Límites anti-DoS para la importación de archivos ===
+const MAX_FILE_BYTES = 2 * 1024 * 1024; // 2 MB
+const MAX_ROWS       = 500;             // máximo de filas a procesar
+
+/**
+ * Mitigación de CSV/XLS Injection:
+ * si la celda comienza con =, +, -, @, TAB o CR, Excel/LibreOffice la
+ * interpretan como fórmula al abrir el archivo. Prefijamos con apóstrofe
+ * para forzar tratamiento como texto.
+ * Además se eliminan caracteres de control que rompen el archivo.
+ */
+const sanitizeCell = (value) => {
+  if (value == null) return '';
+  // eslint-disable-next-line no-control-regex
+  const stripped = String(value).replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, '');
+  if (/^[=+\-@\t\r]/.test(stripped)) return `'${stripped}`;
+  return stripped;
 };
 
 const EJEMPLOS = [
@@ -92,10 +112,16 @@ export default function ExcelImportExport({ isAdmin, onImportDone }) {
     });
     headerRow.height = 22;
 
-    // Filas con datos reales (o ejemplos si no hay datos aún)
+    // Filas con datos reales (o ejemplos si no hay datos aún).
+    // Cada celda pasa por sanitizeCell() para neutralizar fórmulas (=, +, -, @).
     const filas = puntosExistentes.length > 0 ? puntosExistentes : EJEMPLOS;
     filas.forEach((item, idx) => {
-      const row  = ws.addRow([item.nombre, item.zona, item.direccion, item.telefono]);
+      const row  = ws.addRow([
+        sanitizeCell(item.nombre),
+        sanitizeCell(item.zona),
+        sanitizeCell(item.direccion),
+        sanitizeCell(item.telefono),
+      ]);
       const even = idx % 2 === 0;
       row.eachCell((cell) => {
         cell.font      = { name: 'Arial', size: 10, color: { argb: 'FF374151' } };
@@ -122,17 +148,36 @@ export default function ExcelImportExport({ isAdmin, onImportDone }) {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = '';
+
+    // Defensa contra DoS: rechazar archivos demasiado grandes antes de parsear.
+    if (file.size > MAX_FILE_BYTES) {
+      setResultado({ ok: 0, errores: [{ fila: '-', motivo: `El archivo supera ${MAX_FILE_BYTES / (1024 * 1024)} MB.` }] });
+      setShowResult(true);
+      return;
+    }
+
     setImporting(true);
     setShowResult(false);
     setResultado(null);
 
     try {
       const buffer = await file.arrayBuffer();
-      const wb     = XLSX.read(buffer, { type: 'array' });
+      // sheetRows acota cuántas filas decodifica XLSX en memoria.
+      // cellFormula/cellHTML en false: nunca interpretar fórmulas ni HTML embebido.
+      const wb     = XLSX.read(buffer, {
+        type: 'array',
+        cellFormula: false,
+        cellHTML: false,
+        sheetRows: MAX_ROWS + 10,
+      });
       const ws     = wb.Sheets[wb.SheetNames[0]];
       // La plantilla tiene 2 filas antes del encabezado real (título + instrucción).
       // range: 2 le dice a SheetJS que empiece desde la fila 3 (índice 2) como encabezados.
-      const rows   = XLSX.utils.sheet_to_json(ws, { defval: '', range: 2 });
+      let rows     = XLSX.utils.sheet_to_json(ws, { defval: '', range: 2 });
+
+      if (rows.length > MAX_ROWS) {
+        rows = rows.slice(0, MAX_ROWS);
+      }
 
       if (!rows.length) {
         setResultado({ ok: 0, errores: [{ fila: '-', motivo: 'El archivo está vacío.' }] });
@@ -176,6 +221,14 @@ export default function ExcelImportExport({ isAdmin, onImportDone }) {
         if (!d.zona)      { errores.push({ fila, motivo: 'Falta la zona' });      continue; }
         if (!d.direccion) { errores.push({ fila, motivo: 'Falta la dirección' }); continue; }
         if (!d.telefono)  { errores.push({ fila, motivo: 'Falta el teléfono' });  continue; }
+
+        // Normalizar teléfono al formato canónico +54 9 <area> XXXX-XXX(X)
+        const telefonoNorm = normalizeArgPhone(d.telefono);
+        if (!telefonoNorm) {
+          errores.push({ fila, motivo: `Teléfono inválido: "${d.telefono}"` });
+          continue;
+        }
+        d.telefono = telefonoNorm;
 
         // Chequeo de duplicados: mismo nombre Y misma dirección (normalizado)
         const isDuplicate = existentes.some(

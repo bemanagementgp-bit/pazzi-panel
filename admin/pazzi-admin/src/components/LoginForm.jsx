@@ -2,7 +2,7 @@
 import { authAPI } from "../services/api.js";
 import logo from "../assets/logo.png";
 
-const INK = "#0A0A0A";
+const INK = "#0D0700";
 
 export default function LoginForm({ onLoginSuccess }) {
   const [email, setEmail]       = useState("");
@@ -11,7 +11,6 @@ export default function LoginForm({ onLoginSuccess }) {
   const [loading, setLoading]   = useState(false);
   const [focused, setFocused]   = useState(null);
   const [showPwd, setShowPwd]   = useState(false);
-  const isDevelopment = import.meta.env.DEV;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,15 +29,16 @@ export default function LoginForm({ onLoginSuccess }) {
 
   const inputStyle = (name) => ({
     display: "block", width: "100%",
-    padding: "0.75rem 0.9rem",
-    background: focused === name ? "#fff" : "#f9fafb",
-    border: `1.5px solid ${focused === name ? INK : "#e5e7eb"}`,
-    borderRadius: 4,
-    fontSize: "0.9rem",
+    padding: "0.72rem 0.9rem",
+    background: focused === name ? "#fff" : "#fafafa",
+    border: `1px solid ${focused === name ? INK : "#d1d5db"}`,
+    borderRadius: 3,
+    fontSize: "0.875rem",
     fontFamily: "'DM Sans', system-ui, sans-serif",
     fontWeight: 400, color: INK, outline: "none",
-    transition: "border-color 0.15s, background 0.15s",
+    transition: "border-color 0.12s, background 0.12s",
     boxSizing: "border-box",
+    letterSpacing: "0.01em",
   });
 
   return (
@@ -46,152 +46,211 @@ export default function LoginForm({ onLoginSuccess }) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'DM Sans', system-ui, sans-serif; }
-        .lp-wrap { display: flex; flex-direction: column; min-height: 100vh; font-family: 'DM Sans', system-ui, sans-serif; }
+        html, body { height: 100%; }
+        body { font-family: 'DM Sans', system-ui, sans-serif; background: #f5f5f3; }
+
+        .lp-wrap {
+          display: flex; flex-direction: column; min-height: 100vh;
+          font-family: 'DM Sans', system-ui, sans-serif;
+        }
+
+        /* ── Panel izquierdo (marca) ── */
         .lp-brand {
-          position: relative; width: 100%; min-height: 300px;
-          background: #ffb800; overflow: hidden; flex-shrink: 0;
-          display: flex; flex-direction: column; justify-content: space-between; padding: 2rem 2rem 2.5rem;
+          position: relative; width: 100%; min-height: 280px;
+          background: #FABE08; overflow: hidden; flex-shrink: 0;
+          display: flex; flex-direction: column;
+          justify-content: space-between; padding: 2rem 2rem 2.5rem;
         }
         .lp-brand::before {
           content: ''; position: absolute; inset: 0;
-          background-image: radial-gradient(circle, rgba(0,0,0,0.11) 1px, transparent 1px);
-          background-size: 20px 20px; pointer-events: none;
+          background-image: repeating-linear-gradient(
+            -45deg,
+            transparent,
+            transparent 18px,
+            rgba(0,0,0,0.028) 18px,
+            rgba(0,0,0,0.028) 19px
+          );
+          pointer-events: none;
         }
         .lp-brand::after {
-          content: ''; position: absolute; bottom: 0; right: 0;
-          width: 50%; height: 40%; background: rgba(0,0,0,0.055);
-          clip-path: polygon(100% 0, 100% 100%, 0 100%);
+          content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+          background: rgba(0,0,0,0.12);
         }
         .lp-brand-inner { position: relative; z-index: 2; }
-        .lp-form-panel { flex: 1; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2.5rem 1.75rem 3rem; }
+
+        /* ── Panel derecho (formulario) ── */
+        .lp-form-panel {
+          flex: 1; background: #f5f5f3;
+          display: flex; flex-direction: column;
+          align-items: center; justify-content: center;
+          padding: 3rem 1.5rem;
+        }
+
+        /* ── Card ── */
+        .lp-card {
+          width: 100%; max-width: 390px;
+          background: #fff;
+          border: 1px solid #e5e7eb;
+          border-top: 3px solid #FABE08;
+          border-radius: 6px;
+          padding: 2.5rem 2.25rem 2.25rem;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.05);
+        }
+        .lp-divider {
+          height: 1px; background: #f0f0ee; margin: 1.5rem 0;
+        }
+
+        /* ── Inputs ── */
+        .lp-label {
+          display: block; font-size: 0.65rem; font-weight: 600;
+          letter-spacing: 0.09em; text-transform: uppercase;
+          color: #6b7280; margin-bottom: 0.4rem;
+        }
+        .lp-field { margin-bottom: 1.1rem; }
+        .lp-input-dark {
+          display: block; width: 100%;
+          padding: 0.72rem 0.9rem;
+          background: #fafafa;
+          border: 1px solid #d1d5db;
+          border-radius: 3px;
+          font-size: 0.875rem;
+          font-family: 'DM Sans', system-ui, sans-serif;
+          font-weight: 400; color: #0D0700; outline: none;
+          transition: border-color 0.12s, background 0.12s;
+          box-sizing: border-box; letter-spacing: 0.01em;
+        }
+        .lp-input-dark:focus { border-color: #0D0700; background: #fff; }
+        .lp-input-dark::placeholder { color: #9ca3af; }
+
+        /* ── Botón ── */
+        .lp-btn {
+          width: 100%; padding: 0.82rem;
+          background: #0D0700; color: #FABE08;
+          border: none; border-radius: 3px;
+          font-family: 'DM Sans', system-ui, sans-serif;
+          font-size: 0.83rem; font-weight: 800;
+          letter-spacing: 0.06em; text-transform: uppercase;
+          cursor: pointer; transition: opacity 0.12s; margin-top: 0.5rem;
+        }
+        .lp-btn:hover:not(:disabled) { opacity: 0.82; }
+        .lp-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        /* ── Tagline ── */
+        .lp-tagline {
+          font-size: clamp(2.4rem, 5.5vw, 3.6rem);
+          font-weight: 800; line-height: 0.93;
+          letter-spacing: -0.04em; color: #0D0700;
+        }
+
         @media (min-width: 768px) {
           .lp-wrap       { flex-direction: row; }
-          .lp-brand      { width: 46%; min-height: 100vh; padding: 2.75rem 3rem 3.5rem; }
-          .lp-form-panel { width: 54%; padding: 3rem 5rem; }
+          .lp-brand      { width: 44%; min-height: 100vh; padding: 2.75rem 3rem 3.5rem; }
+          .lp-form-panel { width: 56%; padding: 3rem 4rem; }
         }
         @media (min-width: 1200px) {
-          .lp-brand      { width: 42%; }
-          .lp-form-panel { width: 58%; padding: 3rem 8rem; }
+          .lp-brand      { width: 40%; }
+          .lp-form-panel { width: 60%; }
         }
-        .lp-label { display: block; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: #6b7280; margin-bottom: 0.4rem; }
-        .lp-field { margin-bottom: 1.2rem; }
-        .lp-btn { width: 100%; padding: 0.85rem; background: #0A0A0A; color: #fff; border: none; border-radius: 4px; font-family: 'DM Sans', system-ui, sans-serif; font-size: 0.88rem; font-weight: 700; letter-spacing: 0.03em; cursor: pointer; transition: background 0.15s; margin-top: 0.75rem; }
-        .lp-btn:hover:not(:disabled) { background: #1f2937; }
-        .lp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .lp-tagline { font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 800; line-height: 0.95; letter-spacing: -0.03em; color: #0A0A0A; }
         @media (max-width: 767px) {
-          .lp-brand { min-height: 260px; padding: 1.75rem 1.75rem 2rem; }
-          .lp-form-panel { padding: 2rem 1.5rem 2.5rem; }
+          .lp-brand { min-height: 240px; padding: 1.75rem 1.75rem 2rem; }
+          .lp-card  { padding: 2rem 1.5rem 1.75rem; }
         }
       `}</style>
 
       <div className="lp-wrap">
 
+        {/* ── Marca ── */}
         <div className="lp-brand">
           <div className="lp-brand-inner">
-            <img src={logo} alt="Pazzi Buns" style={{ height: 56, display: "block", maxWidth: 180, objectFit: "contain" }} />
+            <img src={logo} alt="Pazzi Buns" style={{ height: 52, display: "block", maxWidth: 170, objectFit: "contain" }} />
           </div>
           <div className="lp-brand-inner">
-            <p style={{ fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(0,0,0,0.38)", marginBottom: "0.7rem" }}>
-              Panel de administración
+            <p style={{ fontSize: "0.55rem", fontWeight: 700, letterSpacing: "0.24em", textTransform: "uppercase", color: "rgba(0,0,0,0.32)", marginBottom: "0.75rem" }}>
+              Sistema de gestión
             </p>
-            <div className="lp-tagline">GESTION<br />TOTAL.</div>
-            <p style={{ marginTop: "1rem", fontSize: "0.78rem", lineHeight: 1.7, color: "rgba(0,0,0,0.45)", maxWidth: 270 }}>
-              Controlá cada punto de venta desde un solo lugar. Rápido, seguro y siempre disponible.
+            <div className="lp-tagline">GESTIÓN<br />DE<br />LOCALES.</div>
+            <div style={{ marginTop: "1.6rem", width: 32, height: 2, background: "rgba(0,0,0,0.2)" }} />
+            <p style={{ marginTop: "0.85rem", fontSize: "0.75rem", lineHeight: 1.75, color: "rgba(0,0,0,0.42)", maxWidth: 250 }}>
+              Administrá puntos de venta, solicitudes y accesos desde un único panel.
             </p>
-            <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.4rem", alignItems: "center" }}>
-              <div style={{ width: 28, height: 2, background: "rgba(0,0,0,0.25)" }} />
-              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "rgba(0,0,0,0.18)" }} />
-            </div>
           </div>
         </div>
 
+        {/* ── Formulario ── */}
         <div className="lp-form-panel">
-          <div style={{ width: "100%", maxWidth: 360 }}>
-            <div style={{ marginBottom: "2rem" }}>
-              <h1 style={{ fontSize: "clamp(1.6rem, 4vw, 2rem)", fontWeight: 800, color: "#0A0A0A", lineHeight: 1.1, letterSpacing: "-0.02em", marginBottom: "0.45rem" }}>
-                Bienvenido de vuelta.
-              </h1>
-              <p style={{ fontSize: "0.8rem", color: "#6b7280" }}>
-                Ingresa tus credenciales para continuar.
+          <div className="lp-card">
+
+            {/* Encabezado */}
+            <div style={{ marginBottom: "1.75rem" }}>
+              <p style={{ fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#9ca3af", marginBottom: "0.65rem" }}>
+                Pazzi Buns · Acceso restringido
               </p>
+              <h1 style={{ fontSize: "1.35rem", fontWeight: 700, color: "#0D0700", lineHeight: 1.2, letterSpacing: "-0.01em", display: "inline-block", borderBottom: "2px solid #FABE08", paddingBottom: "0.2rem" }}>
+                Iniciar sesión
+              </h1>
             </div>
-            <form onSubmit={handleSubmit}>
+
+            <div className="lp-divider" />
+
+            {/* Formulario */}
+            <form onSubmit={handleSubmit} style={{ marginTop: "1.5rem" }}>
               <div className="lp-field">
                 <label className="lp-label">Correo electrónico</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} onFocus={() => setFocused("email")} onBlur={() => setFocused(null)} placeholder="usuario@pazzi.com" required style={inputStyle("email")} />
+                <input
+                  className="lp-input-dark"
+                  type="email" value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="usuario@pazzi.com" required
+                />
               </div>
               <div className="lp-field">
                 <label className="lp-label">Contraseña</label>
-                <div style={{ position: 'relative' }}>
-                  <input type={showPwd ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} onFocus={() => setFocused("password")} onBlur={() => setFocused(null)} placeholder="••••••••" required style={{ ...inputStyle("password"), paddingRight: '2.5rem' }} />
+                <div style={{ position: "relative" }}>
+                  <input
+                    className="lp-input-dark"
+                    type={showPwd ? "text" : "password"} value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••" required
+                    style={{ paddingRight: "2.5rem" }}
+                  />
                   <button
                     type="button"
                     onClick={() => setShowPwd(v => !v)}
                     style={{
-                      position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)',
-                      background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                      color: '#9ca3af', display: 'flex', alignItems: 'center', lineHeight: 1,
+                      position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)",
+                      background: "none", border: "none", cursor: "pointer", padding: 0,
+                      color: "#9ca3af", display: "flex", alignItems: "center", lineHeight: 1,
                     }}
                     tabIndex={-1}
-                    aria-label={showPwd ? 'Ocultar contraseña' : 'Ver contraseña'}
+                    aria-label={showPwd ? "Ocultar contraseña" : "Ver contraseña"}
                   >
-                    <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: '1.1rem', fontWeight: 'normal', fontStyle: 'normal' }}>
-                      {showPwd ? 'visibility_off' : 'visibility'}
+                    <span style={{ fontFamily: "Material Symbols Outlined", fontSize: "1rem", fontWeight: "normal", fontStyle: "normal" }}>
+                      {showPwd ? "visibility_off" : "visibility"}
                     </span>
                   </button>
                 </div>
               </div>
+
               {error && (
-                <div style={{ marginBottom: "1rem", padding: "0.7rem 0.9rem", background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 4, fontSize: "0.78rem", color: "#dc2626", fontWeight: 500 }}>
+                <div style={{ marginBottom: "1rem", padding: "0.65rem 0.85rem", background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 3, fontSize: "0.775rem", color: "#dc2626", fontWeight: 500 }}>
                   {error}
                 </div>
               )}
-              <button type="submit" disabled={loading} className="lp-btn">
-                {loading ? "Ingresando..." : "Ingresar al panel"}
-              </button>
 
-              {isDevelopment && (
-                <div style={{ marginTop: '1.25rem', padding: '0.75rem', background: '#fffbeb', border: '1px dashed #f59e0b', borderRadius: 4 }}>
-                  <p style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#92400e', marginBottom: '0.55rem' }}>
-                    Acceso rapido (solo desarrollo)
-                  </p>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button
-                      type="button"
-                      onClick={() => { setEmail('Adminpazzi@gmail.com'); setPassword('PazziAdmin#2026!'); }}
-                      style={{
-                        flex: 1, padding: '0.45rem 0.6rem', borderRadius: 4,
-                        border: '1px solid #d97706', background: '#fef3c7',
-                        fontSize: '0.68rem', fontWeight: 700, color: '#92400e',
-                        cursor: 'pointer', fontFamily: "'DM Sans', system-ui, sans-serif",
-                      }}
-                    >
-                      Admin
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setEmail('Pazzivende@gmail.com'); setPassword('PazziVend#2026!'); }}
-                      style={{
-                        flex: 1, padding: '0.45rem 0.6rem', borderRadius: 4,
-                        border: '1px solid #d97706', background: '#fef3c7',
-                        fontSize: '0.68rem', fontWeight: 700, color: '#92400e',
-                        cursor: 'pointer', fontFamily: "'DM Sans', system-ui, sans-serif",
-                      }}
-                    >
-                      Vendedor
-                    </button>
-                  </div>
-                </div>
-              )}
+              <button type="submit" disabled={loading} className="lp-btn">
+                {loading ? "Verificando..." : "Ingresar"}
+              </button>
             </form>
-            <p style={{ marginTop: "1.75rem", fontSize: "0.68rem", color: "#9ca3af", textAlign: "center", lineHeight: 1.6 }}>
-              Problemas para ingresar?{" "}
-              <a href="https://wa.me/5492214400536" target="_blank" rel="noopener noreferrer" style={{ color: "#0A0A0A", fontWeight: 600, textDecoration: "none" }}>
+
+            {/* Footer */}
+            <p style={{ marginTop: "1.5rem", fontSize: "0.65rem", color: "#9ca3af", textAlign: "center", lineHeight: 1.6 }}>
+              ¿Problemas para ingresar?{" "}
+              <a href="https://wa.me/5492214400536" target="_blank" rel="noopener noreferrer"
+                style={{ color: "#0D0700", fontWeight: 600, textDecoration: "none" }}>
                 Contactar soporte
               </a>
             </p>
+
           </div>
         </div>
 

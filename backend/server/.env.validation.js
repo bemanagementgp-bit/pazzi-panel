@@ -6,7 +6,6 @@
 const requiredEnvVars = [
   'TURSO_CONNECTION_URL',
   'TURSO_AUTH_TOKEN',
-  'SERVER_PORT',
   'NODE_ENV',
   'JWT_SECRET',
   'JWT_EXPIRATION',
@@ -32,6 +31,10 @@ export const validateEnv = () => {
       missing.push(varName);
     }
   });
+
+  if (!process.env.PORT && !process.env.SERVER_PORT) {
+    missing.push('PORT o SERVER_PORT');
+  }
 
   if (missing.length > 0) {
     throw new Error(

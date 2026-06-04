@@ -6,6 +6,7 @@ import db, { initDB } from './config/database.js';
 import puntosRoutes from './routes/puntos.js';
 import validateEnv from './.env.validation.js';
 import logger, { loggerMiddleware } from './utils/logger.js';
+import { apiLimiter } from './middleware/rateLimiters.js';
 
 dotenv.config();
 
@@ -18,9 +19,13 @@ try {
 }
 
 const app = express();
-const PORT = process.env.SERVER_PORT || 3000;
+const PORT = process.env.PORT || process.env.SERVER_PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const IS_PRODUCTION = NODE_ENV === 'production';
+
+// Necesario detrás de nginx/PM2 para que `req.ip` venga del X-Forwarded-For
+// real y para que la cookie `Secure` funcione cuando el TLS termina en nginx.
+app.set('trust proxy', 1);
 
 // ============ SECURITY HEADERS ============
 // Helmet configura headers de seguridad HTTP automáticamente
@@ -55,11 +60,16 @@ app.use(cors({
 }));
 
 // ============ BODY PARSER ============
-app.use(express.json({ limit: '10mb' })); // Límite de tamaño de request
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Límite acotado: el endpoint más pesado recibe un JSON pequeño (un punto de venta).
+// Esto reduce superficie de DoS por payloads gigantes.
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
 // ============ LOGGING ============
 app.use(loggerMiddleware);
+
+// ============ RATE LIMIT GLOBAL ============
+app.use('/api/', apiLimiter);
 
 // Inicializar BD
 const startServer = async () => {
@@ -155,12 +165,22 @@ const startServer = async () => {
     });
   });
 
-  // Error handler
+  // Error handler global.
+  // En producción nunca filtra el `err.message` interno (puede contener
+  // nombres de tablas, drivers, paths o variables de entorno).
+  // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => {
-    console.error('Error:', err);
-    res.status(err.status || 500).json({
-      error: err.message || 'Error interno del servidor',
+    const status = err.status || 500;
+    logger.error('Unhandled error', {
+      error: err.message,
+      stack: IS_PRODUCTION ? undefined : err.stack,
+      path: req.path,
+      method: req.method,
     });
+    const safeMessage = !IS_PRODUCTION
+      ? (err.message || 'Error interno del servidor')
+      : (status < 500 && err.expose ? err.message : 'Error interno del servidor');
+    res.status(status).json({ error: safeMessage });
   });
 
   app.listen(PORT, () => {

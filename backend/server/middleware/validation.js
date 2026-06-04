@@ -1,8 +1,36 @@
 import Joi from 'joi';
+import { normalizeArgPhone } from '../utils/phone.js';
 
 /**
- * Schemas de validación para todos los endpoints
+ * Schemas de validación para todos los endpoints.
+ *
+ * Estrategia de defensa en profundidad:
+ *  - Se prohíben caracteres `<` y `>` para mitigar XSS (aunque React escapa).
+ *  - Se prohíben caracteres de control y `\r\n\t` para que el dato no rompa
+ *    logs ni archivos exportados.
+ *  - Se prohíben los prefijos de fórmula de hojas de cálculo
+ *    (`= + - @ TAB CR`) en el primer carácter para evitar CSV/XLS Injection
+ *    cuando un admin descargue la plantilla con datos creados por terceros.
  */
+
+// Cualquier carácter de control ASCII excepto el espacio normal.
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHARS = /[\u0000-\u0008\u000B-\u001F\u007F]/;
+const FORMULA_PREFIX = /^[=+\-@\t\r]/;
+const HTML_BRACKETS = /[<>]/;
+
+const safeText = (label) => Joi.string()
+  .custom((value, helpers) => {
+    if (CONTROL_CHARS.test(value)) return helpers.error('string.controlChars');
+    if (HTML_BRACKETS.test(value)) return helpers.error('string.htmlBrackets');
+    if (FORMULA_PREFIX.test(value)) return helpers.error('string.formulaPrefix');
+    return value;
+  })
+  .messages({
+    'string.controlChars': `${label} contiene caracteres de control no permitidos`,
+    'string.htmlBrackets': `${label} no puede contener los caracteres < o >`,
+    'string.formulaPrefix': `${label} no puede comenzar con =, +, -, @, tabulación o retorno de carro`,
+  });
 
 export const schemas = {
   /**
@@ -11,6 +39,7 @@ export const schemas = {
   login: Joi.object({
     email: Joi.string()
       .email()
+      .max(254)
       .required()
       .messages({
         'string.email': 'Email debe ser válido',
@@ -18,6 +47,7 @@ export const schemas = {
       }),
     password: Joi.string()
       .min(8)
+      .max(200)
       .required()
       .messages({
         'string.min': 'Contraseña debe tener al menos 8 caracteres',
@@ -29,7 +59,7 @@ export const schemas = {
    * Crear/editar punto de venta
    */
   punto: Joi.object({
-    nombre: Joi.string()
+    nombre: safeText('Nombre')
       .trim()
       .min(3)
       .max(255)
@@ -39,7 +69,7 @@ export const schemas = {
         'string.max': 'Nombre no puede exceder 255 caracteres',
         'any.required': 'Nombre es requerido',
       }),
-    zona: Joi.string()
+    zona: safeText('Zona')
       .trim()
       .min(2)
       .max(100)
@@ -49,7 +79,7 @@ export const schemas = {
         'string.max': 'Zona no puede exceder 100 caracteres',
         'any.required': 'Zona es requerida',
       }),
-    direccion: Joi.string()
+    direccion: safeText('Dirección')
       .trim()
       .min(5)
       .max(255)
@@ -60,13 +90,14 @@ export const schemas = {
         'any.required': 'Dirección es requerida',
       }),
     telefono: Joi.string()
-      .pattern(/^[\d\s\-\+()]*$/)
-      .min(6)
-      .max(25)
       .required()
+      .custom((value, helpers) => {
+        const normalized = normalizeArgPhone(value);
+        if (!normalized) return helpers.error('string.phoneInvalid');
+        return normalized;
+      })
       .messages({
-        'string.pattern.base': 'Teléfono tiene formato inválido',
-        'string.min': 'Teléfono debe tener al menos 6 caracteres',
+        'string.phoneInvalid': 'Teléfono inválido. Formato esperado: +54 9 11 1234-5678',
         'any.required': 'Teléfono es requerido',
       }),
     lat: Joi.number()
@@ -102,6 +133,13 @@ export const schemas = {
         'number.positive': 'ID debe ser un número positivo',
         'any.required': 'ID es requerido',
       }),
+  }),
+
+  /**
+   * Cambiar estado (admin)
+   */
+  estado: Joi.object({
+    estado: Joi.string().valid('aprobado', 'pendiente', 'inactivo').required(),
   }),
 };
 

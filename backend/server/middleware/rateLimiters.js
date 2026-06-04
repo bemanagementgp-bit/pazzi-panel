@@ -1,51 +1,54 @@
 import rateLimit from 'express-rate-limit';
 
 /**
- * Rate Limiter para login
- * Máximo 5 intentos en 15 minutos
- * Exponential backoff: 1s → 5s → 15s
+ * Rate Limiter para login.
+ * Máximo 5 intentos FALLIDOS en 15 minutos por IP.
+ *
+ * NOTA IMPORTANTE: `skipSuccessfulRequests` se evalúa DESPUÉS del handler
+ * (cuando `res.statusCode` ya fue seteado). La versión anterior usaba
+ * `skip: (req,res) => res.statusCode === 200`, pero `skip()` corre ANTES del
+ * handler, cuando el statusCode todavía es 200 por default → saltaba TODAS
+ * las requests y dejaba el endpoint sin protección efectiva contra fuerza
+ * bruta. No volver a esa forma.
  */
 export const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 5, // 5 intentos máximo
-  message: 'Demasiados intentos fallidos. Intenta nuevamente en unos minutos.',
-  standardHeaders: true, // Retorna info en `RateLimit-*` headers
-  legacyHeaders: false, // Desabilita `X-RateLimit-*` headers
-  skip: (req, res) => {
-    // No contar intentos exitosos (no limitar si el login fue exitoso)
-    return res.statusCode === 200;
-  },
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
   handler: (req, res) => {
     res.status(429).json({
-      error: 'Demasiados intentos de login. Intenta más tarde.',
+      error: 'Demasiados intentos de login. Intenta nuevamente en unos minutos.',
     });
   },
 });
 
 /**
- * Rate Limiter general para API
- * Máximo 100 requests por 15 minutos
+ * Rate Limiter general para toda la API. Se monta a nivel app.
  */
 export const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // 100 requests
-  message: 'Demasiadas requests. Intenta nuevamente más tarde.',
+  windowMs: 15 * 60 * 1000,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({ error: 'Demasiadas requests. Intenta nuevamente más tarde.' });
+  },
 });
 
 /**
- * Rate Limiter para POST/PUT/DELETE
- * Más estricto que GET
+ * Rate Limiter más estricto para mutaciones (POST/PUT/DELETE).
  */
 export const createUpdateDeleteLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minuto
-  max: 30, // 30 requests por minuto
-  message: 'Demasiadas operaciones. Intenta nuevamente más tarde.',
+  windowMs: 60 * 1000,
+  max: 30,
   standardHeaders: true,
   legacyHeaders: false,
-  // Solo contar POST, PUT, DELETE
   skip: (req) => !['POST', 'PUT', 'DELETE'].includes(req.method),
+  handler: (req, res) => {
+    res.status(429).json({ error: 'Demasiadas operaciones. Intenta nuevamente más tarde.' });
+  },
 });
 
 export default {

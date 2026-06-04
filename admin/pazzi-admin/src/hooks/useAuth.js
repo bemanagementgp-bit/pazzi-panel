@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import * as tokenManager from '../utils/tokenManager.js';
+import { authAPI } from '../services/api.js';
 
 export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -45,9 +46,15 @@ export const useAuth = () => {
   };
 
   /**
-   * Logout - limpiar datos de sesión
+   * Logout - invalida la sesión en el backend (revoca jti + clear cookie)
+   * y limpia el almacenamiento local.
    */
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await authAPI.logout();
+    } catch {
+      /* aun si falla la llamada (ej. red caída), limpiamos local */
+    }
     tokenManager.clearToken();
     setIsAuthenticated(false);
     setAdmin(null);

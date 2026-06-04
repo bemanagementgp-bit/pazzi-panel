@@ -45,7 +45,20 @@ export const initDB = async () => {
     
     await db.execute(createTableSQL);
     console.log('✅ Tabla "puntos_de_venta" lista');
-    
+
+    // Migración idempotente: agregar columna `createdBy` si no existe.
+    // SQLite no soporta `ADD COLUMN IF NOT EXISTS`, así que detectamos vía PRAGMA.
+    try {
+      const cols = await db.execute("PRAGMA table_info(puntos_de_venta)");
+      const hasCreatedBy = cols.rows.some(r => r.name === 'createdBy' || r[1] === 'createdBy');
+      if (!hasCreatedBy) {
+        await db.execute("ALTER TABLE puntos_de_venta ADD COLUMN createdBy TEXT");
+        console.log('✅ Columna "createdBy" agregada');
+      }
+    } catch (e) {
+      console.warn('⚠️  No se pudo verificar/agregar columna createdBy:', e.message);
+    }
+
     // Insertar datos iniciales si la tabla está vacía
     const countResult = await db.execute('SELECT COUNT(*) as count FROM puntos_de_venta');
     const count = countResult.rows[0]?.[0] || 0;
