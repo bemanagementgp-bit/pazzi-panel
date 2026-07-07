@@ -59,6 +59,20 @@ export const initDB = async () => {
       console.warn('⚠️  No se pudo verificar/agregar columna createdBy:', e.message);
     }
 
+    // Migración idempotente: columnas de líneas de producto (hamburguesa/pancho/sanguches).
+    try {
+      const cols = await db.execute("PRAGMA table_info(puntos_de_venta)");
+      const nombresCols = cols.rows.map(r => r.name ?? r[1]);
+      for (const columna of ['vende_hamburguesa', 'vende_pancho', 'vende_sanguches']) {
+        if (!nombresCols.includes(columna)) {
+          await db.execute(`ALTER TABLE puntos_de_venta ADD COLUMN ${columna} INTEGER DEFAULT 0`);
+          console.log(`✅ Columna "${columna}" agregada`);
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️  No se pudieron verificar/agregar columnas de líneas de producto:', e.message);
+    }
+
     // Insertar datos iniciales si la tabla está vacía
     const countResult = await db.execute('SELECT COUNT(*) as count FROM puntos_de_venta');
     const count = countResult.rows[0]?.[0] || 0;

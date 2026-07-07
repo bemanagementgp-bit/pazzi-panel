@@ -21,6 +21,22 @@ const haversineKm = (lat1, lng1, lat2, lng2) => {
 
 const normalize = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
+const LINEAS = [
+  { key: 'vende_hamburguesa', label: 'Hamburguesa', icon: '\ud83c\udf54' },
+  { key: 'vende_pancho',      label: 'Pancho',       icon: '\ud83c\udf2d' },
+  { key: 'vende_sanguches',   label: 'Sanguches',    icon: '\ud83e\udd6a' },
+];
+
+const countLineas = (p) => LINEAS.reduce((n, { key }) => n + (p[key] ? 1 : 0), 0);
+
+// Jerarqu\u00eda visual: a m\u00e1s l\u00edneas vendidas, marcador m\u00e1s grande y de color m\u00e1s intenso
+const TIER = {
+  3: { size: 38, color: '#c1121f', ring: '#7f0d13' },
+  2: { size: 29, color: '#ff8f00', ring: '#b35f00' },
+  1: { size: 23, color: '#ffd54f', ring: '#c9a227' },
+  0: { size: 18, color: '#cbd5e1', ring: '#94a3b8' },
+};
+
 export default function MapaView({ puntos: puntosExternal, refresh, setPuntos }) {
   const mapRef      = useRef(null);
   const leafletRef  = useRef(null);
@@ -95,6 +111,8 @@ export default function MapaView({ puntos: puntosExternal, refresh, setPuntos })
         .map(p => ({ ...p, _dist: haversineKm(userPos.lat, userPos.lng, p.lat, p.lng) }))
         .filter(p => p._dist <= RADIO_KM)
         .sort((a, b) => a._dist - b._dist);
+    } else {
+      list = [...list].sort((a, b) => countLineas(b) - countLineas(a));
     }
     return list;
   })();
@@ -124,19 +142,28 @@ export default function MapaView({ puntos: puntosExternal, refresh, setPuntos })
     markersRef.current = [];
     markerMapRef.current = {};
 
-    const makeIcon = (highlight) => L.divIcon({
-      html: `<div style="width:${highlight?32:24}px;height:${highlight?32:24}px;border-radius:50% 50% 50% 0;background:${highlight?'#ff6b00':'#ffb800'};border:2px solid #1a1714;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>`,
-      className: '', iconSize: [highlight?32:24, highlight?32:24], iconAnchor: [highlight?16:12, highlight?32:24], popupAnchor: [0, -30],
-    });
+    const makeIcon = (p, highlight) => {
+      const tier = TIER[countLineas(p)] ?? TIER[0];
+      const size = highlight ? tier.size + 8 : tier.size;
+      return L.divIcon({
+        html: `<div style="width:${size}px;height:${size}px;border-radius:50% 50% 50% 0;background:${tier.color};border:2.5px solid ${tier.ring};transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,0.35)${countLineas(p) === 3 ? ',0 0 0 3px rgba(193,18,31,0.18)' : ''}"></div>`,
+        className: '', iconSize: [size, size], iconAnchor: [size / 2, size], popupAnchor: [0, -size - 6],
+      });
+    };
+
+    const lineasChips = (p) => LINEAS
+      .map(({ key, icon, label: lineaLabel }) => `<span title="${lineaLabel}" style="opacity:${p[key] ? 1 : 0.25};font-size:0.85rem;margin-right:3px">${icon}</span>`)
+      .join('');
 
     filtered.forEach(p => {
-      const marker = L.marker([p.lat, p.lng], { icon: makeIcon(false) })
+      const marker = L.marker([p.lat, p.lng], { icon: makeIcon(p, false) })
         .addTo(map)
         .bindPopup(`
           <div style="font-family:'DM Sans',sans-serif;min-width:190px;padding:4px 0">
             <div style="font-weight:800;font-size:0.82rem;color:#0f172a;margin-bottom:4px">${p.nombre}</div>
             <div style="font-size:0.7rem;color:#64748b;margin-bottom:2px">📍 ${p.direccion}</div>
             <div style="font-size:0.7rem;color:#64748b;margin-bottom:6px">📞 ${p.telefono}</div>
+            <div style="margin-bottom:6px">${lineasChips(p)}<span style="font-size:0.6rem;font-weight:700;color:#0f172a;margin-left:4px">${countLineas(p)}/3 líneas</span></div>
             ${p._dist != null ? `<div style="font-size:0.65rem;color:#0f172a;font-weight:700;margin-bottom:6px">🚶 ${p._dist < 1 ? (p._dist*1000).toFixed(0)+' m' : p._dist.toFixed(1)+' km'}</div>` : ''}
             <span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:0.58rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;background:#fef9c3;color:#92400e">${p.zona}</span>
           </div>
@@ -300,13 +327,19 @@ export default function MapaView({ puntos: puntosExternal, refresh, setPuntos })
                 >
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
                     <span style={{
-                      flexShrink: 0, width: 20, height: 20, borderRadius: '50% 50% 50% 0',
-                      background: T.yellow, border: '1.5px solid #1a1714',
+                      flexShrink: 0, width: TIER[countLineas(p)]?.size * 0.7 || 14, height: TIER[countLineas(p)]?.size * 0.7 || 14,
+                      borderRadius: '50% 50% 50% 0',
+                      background: TIER[countLineas(p)]?.color || T.yellow, border: `1.5px solid ${TIER[countLineas(p)]?.ring || '#1a1714'}`,
                       transform: 'rotate(-45deg)', display: 'inline-block', marginTop: 2,
                     }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: '0.76rem', fontWeight: 800, color: T.ink, marginBottom: '0.15rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nombre}</div>
                       <div style={{ fontSize: '0.67rem', color: T.muted, marginBottom: '0.1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.direccion}</div>
+                      <div style={{ marginTop: '0.15rem' }}>
+                        {LINEAS.map(({ key, icon, label: lineaLabel }) => (
+                          <span key={key} title={lineaLabel} style={{ opacity: p[key] ? 1 : 0.25, fontSize: '0.72rem', marginRight: 3 }}>{icon}</span>
+                        ))}
+                      </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.3rem' }}>
                         <span style={{ fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', background: '#fef9c3', color: '#92400e', padding: '1px 6px', borderRadius: 99 }}>{p.zona}</span>
                         {p._dist != null && (

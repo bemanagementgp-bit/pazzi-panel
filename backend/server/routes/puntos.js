@@ -153,6 +153,9 @@ router.get('/', async (req, res) => {
       lat: row.lat,
       lng: row.lng,
       estado: row.estado,
+      vende_hamburguesa: !!row.vende_hamburguesa,
+      vende_pancho: !!row.vende_pancho,
+      vende_sanguches: !!row.vende_sanguches,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     }));
@@ -181,7 +184,11 @@ router.get('/vendedor/pendientes', verifyToken, async (req, res) => {
     const puntos = result.rows.map(row => ({
       id: row.id, nombre: row.nombre, zona: row.zona, direccion: row.direccion,
       telefono: row.telefono, lat: row.lat, lng: row.lng,
-      estado: row.estado, createdAt: row.createdAt, updatedAt: row.updatedAt,
+      estado: row.estado,
+      vende_hamburguesa: !!row.vende_hamburguesa,
+      vende_pancho: !!row.vende_pancho,
+      vende_sanguches: !!row.vende_sanguches,
+      createdAt: row.createdAt, updatedAt: row.updatedAt,
     }));
     res.json(puntos);
   } catch (error) {
@@ -200,7 +207,11 @@ router.get('/admin/all', verifyAdmin, async (req, res) => {
     const puntos = result.rows.map(row => ({
       id: row.id, nombre: row.nombre, zona: row.zona, direccion: row.direccion,
       telefono: row.telefono, lat: row.lat, lng: row.lng,
-      estado: row.estado, createdAt: row.createdAt, updatedAt: row.updatedAt,
+      estado: row.estado,
+      vende_hamburguesa: !!row.vende_hamburguesa,
+      vende_pancho: !!row.vende_pancho,
+      vende_sanguches: !!row.vende_sanguches,
+      createdAt: row.createdAt, updatedAt: row.updatedAt,
     }));
     res.json(puntos);
   } catch (error) {
@@ -266,6 +277,9 @@ router.get('/:id', validateParams(schemas.id), async (req, res) => {
       lat: row.lat,
       lng: row.lng,
       estado: row.estado,
+      vende_hamburguesa: !!row.vende_hamburguesa,
+      vende_pancho: !!row.vende_pancho,
+      vende_sanguches: !!row.vende_sanguches,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     });
@@ -283,14 +297,14 @@ router.post(
   validate(schemas.punto),
   async (req, res) => {
     try {
-      const { nombre, zona, direccion, telefono, lat, lng } = req.body;
+      const { nombre, zona, direccion, telefono, lat, lng, vende_hamburguesa, vende_pancho, vende_sanguches } = req.body;
       const estadoInicial = req.user?.role === 'admin' ? 'aprobado' : 'pendiente';
       const createdBy = req.user?.email || null;
 
       const result = await db.execute({
         sql: `INSERT INTO puntos_de_venta
-                (nombre, zona, direccion, telefono, lat, lng, estado, createdBy)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                (nombre, zona, direccion, telefono, lat, lng, estado, createdBy, vende_hamburguesa, vende_pancho, vende_sanguches)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         args: [
           nombre,
           zona,
@@ -300,6 +314,9 @@ router.post(
           lng == null || Number.isNaN(lng) ? null : lng,
           estadoInicial,
           createdBy,
+          vende_hamburguesa ? 1 : 0,
+          vende_pancho ? 1 : 0,
+          vende_sanguches ? 1 : 0,
         ],
       });
 
@@ -328,7 +345,7 @@ router.put(
   validate(schemas.punto),
   async (req, res) => {
     try {
-      const { nombre, zona, direccion, telefono, lat, lng } = req.body;
+      const { nombre, zona, direccion, telefono, lat, lng, vende_hamburguesa, vende_pancho, vende_sanguches } = req.body;
       const { id } = req.params;
 
       const selectResult = await db.execute({
@@ -353,14 +370,18 @@ router.put(
       const newTelefono  = telefono  ?? row.telefono;
       const newLat       = lat !== undefined ? lat : row.lat;
       const newLng       = lng !== undefined ? lng : row.lng;
+      const newVendeHamburguesa = vende_hamburguesa !== undefined ? (vende_hamburguesa ? 1 : 0) : row.vende_hamburguesa;
+      const newVendePancho      = vende_pancho !== undefined ? (vende_pancho ? 1 : 0) : row.vende_pancho;
+      const newVendeSanguches   = vende_sanguches !== undefined ? (vende_sanguches ? 1 : 0) : row.vende_sanguches;
 
       await db.execute({
         sql: `UPDATE puntos_de_venta
                  SET nombre = ?, zona = ?, direccion = ?, telefono = ?,
                      lat = ?, lng = ?, estado = 'aprobado',
+                     vende_hamburguesa = ?, vende_pancho = ?, vende_sanguches = ?,
                      updatedAt = CURRENT_TIMESTAMP
                WHERE id = ?`,
-        args: [newNombre, newZona, newDireccion, newTelefono, newLat, newLng, id],
+        args: [newNombre, newZona, newDireccion, newTelefono, newLat, newLng, newVendeHamburguesa, newVendePancho, newVendeSanguches, id],
       });
 
       const changes = {};

@@ -118,6 +118,9 @@ export const schemas = {
         'number.min': 'Longitud debe estar entre -180 y 180',
         'number.max': 'Longitud debe estar entre -180 y 180',
       }),
+    vende_hamburguesa: Joi.boolean().optional().default(false),
+    vende_pancho: Joi.boolean().optional().default(false),
+    vende_sanguches: Joi.boolean().optional().default(false),
 
   }),
 

@@ -16,9 +16,16 @@ const T = {
 
 const ZONAS = [];
 
+const LINEAS = [
+  { key: 'vende_hamburguesa', label: 'Hamburguesa', icon: '🍔' },
+  { key: 'vende_pancho',      label: 'Pancho',       icon: '🌭' },
+  { key: 'vende_sanguches',   label: 'Sanguches',    icon: '🥪' },
+];
+
 export default function PuntoForm({ punto, onSuccess, onCancel, isAdmin }) {
   const [formData, setFormData] = useState({
     nombre: '', zona: '', direccion: '', telefono: '', lat: '', lng: '',
+    vende_hamburguesa: false, vende_pancho: false, vende_sanguches: false,
   });
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
@@ -354,6 +361,40 @@ export default function PuntoForm({ punto, onSuccess, onCancel, isAdmin }) {
             onBlur={(e) => { handleTelefonoBlur(e); onBlur(e); }}
             required placeholder="+54 9 11 1234-5678" style={inputBase} />
         )}
+
+        {/* Líneas que vende */}
+        <div>
+          {label('Líneas que vende')}
+          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+            {LINEAS.map(({ key, label: lineaLabel, icon }) => {
+              const active = !!formData[key];
+              return (
+                <label
+                  key={key}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '0.4rem',
+                    padding: '0.5rem 0.85rem',
+                    border: `1.5px solid ${active ? T.yellow : T.border}`,
+                    borderRadius: 6,
+                    background: active ? '#fffbeb' : T.white,
+                    cursor: 'pointer',
+                    fontSize: '0.76rem', fontWeight: 700, color: T.ink,
+                    transition: 'border-color 0.12s, background 0.12s',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={active}
+                    onChange={e => setFormData(prev => ({ ...prev, [key]: e.target.checked }))}
+                    style={{ accentColor: T.yellow, width: 15, height: 15, cursor: 'pointer' }}
+                  />
+                  <span>{icon}</span>
+                  {lineaLabel}
+                </label>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Lat + Lng (solo admin) */}
         {isAdmin && (

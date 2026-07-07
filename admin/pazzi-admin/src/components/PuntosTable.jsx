@@ -19,11 +19,21 @@ const ESTADO = {
   inactivo:  { bg: '#fef2f2', color: '#b91c1c', label: 'Inactivo'  },
 };
 
+const LINEAS = [
+  { key: 'vende_hamburguesa', label: 'Hamburguesa', icon: '🍔' },
+  { key: 'vende_pancho',      label: 'Pancho',       icon: '🌭' },
+  { key: 'vende_sanguches',   label: 'Sanguches',    icon: '🥪' },
+];
+
+const countLineas = (p) => LINEAS.reduce((n, { key }) => n + (p[key] ? 1 : 0), 0);
+
 export default function PuntosTable({ refresh, onEdit, onDelete, setPuntos, emptySlot, isAdmin }) {
   const [puntos, setPuntosLocal] = useState([]);
   const [loading, setLoading]    = useState(true);
   const [search, setSearch]      = useState('');
   const [hovered, setHovered]    = useState(null);
+  const [lineaFilter, setLineaFilter] = useState([]);   // keys de LINEAS activos como filtro
+  const [sort, setSort]          = useState({ key: null, dir: 'desc' });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -40,12 +50,27 @@ export default function PuntosTable({ refresh, onEdit, onDelete, setPuntos, empt
 
   useEffect(() => { load(); }, [load]);
 
-  const filtered = puntos.filter(p =>
-    !search ||
-    p.nombre?.toLowerCase().includes(search.toLowerCase()) ||
-    p.zona?.toLowerCase().includes(search.toLowerCase()) ||
-    p.direccion?.toLowerCase().includes(search.toLowerCase())
-  );
+  const toggleLineaFilter = (key) => {
+    setLineaFilter(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+  };
+
+  const toggleSort = (key) => {
+    setSort(prev => prev.key === key ? { key, dir: prev.dir === 'desc' ? 'asc' : 'desc' } : { key, dir: 'desc' });
+  };
+
+  const filtered = puntos
+    .filter(p =>
+      !search ||
+      p.nombre?.toLowerCase().includes(search.toLowerCase()) ||
+      p.zona?.toLowerCase().includes(search.toLowerCase()) ||
+      p.direccion?.toLowerCase().includes(search.toLowerCase())
+    )
+    .filter(p => lineaFilter.length === 0 || lineaFilter.every(key => p[key]))
+    .sort((a, b) => {
+      if (sort.key !== 'lineas') return 0;
+      const diff = countLineas(a) - countLineas(b);
+      return sort.dir === 'desc' ? -diff : diff;
+    });
 
   /* ── Loading ── */
   if (loading) {
@@ -121,6 +146,36 @@ export default function PuntosTable({ refresh, onEdit, onDelete, setPuntos, empt
         )}
       </div>
 
+      {/* Filtro por líneas */}
+      <div style={{ padding: '0.6rem 1rem', borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.muted }}>Filtrar por línea:</span>
+        {LINEAS.map(({ key, label: lineaLabel, icon }) => {
+          const active = lineaFilter.includes(key);
+          return (
+            <button
+              key={key}
+              onClick={() => toggleLineaFilter(key)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                padding: '0.25rem 0.6rem', borderRadius: 99,
+                border: `1.5px solid ${active ? T.yellow : T.border}`,
+                background: active ? '#fffbeb' : 'transparent',
+                fontSize: '0.68rem', fontWeight: 700, color: T.ink,
+                cursor: 'pointer', fontFamily: "'DM Sans', system-ui, sans-serif",
+                transition: 'border-color 0.12s, background 0.12s',
+              }}
+            >
+              <span>{icon}</span>{lineaLabel}
+            </button>
+          );
+        })}
+        {lineaFilter.length > 0 && (
+          <button onClick={() => setLineaFilter([])} style={{ border: 'none', background: 'none', cursor: 'pointer', color: T.muted, fontSize: '0.65rem', fontWeight: 700, textDecoration: 'underline' }}>
+            Limpiar
+          </button>
+        )}
+      </div>
+
       {/* Table */}
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -130,7 +185,13 @@ export default function PuntosTable({ refresh, onEdit, onDelete, setPuntos, empt
               <th style={thStyle}>Zona</th>
               <th style={thStyle}>Dirección</th>
               <th style={thStyle}>Teléfono</th>
-
+              <th
+                style={{ ...thStyle, cursor: 'pointer', userSelect: 'none' }}
+                onClick={() => toggleSort('lineas')}
+                title="Ordenar por cantidad de líneas"
+              >
+                Líneas {sort.key === 'lineas' && (sort.dir === 'desc' ? '▼' : '▲')}
+              </th>
               <th style={thStyle}>Estado</th>
               {isAdmin && <th style={{ ...thStyle, textAlign: 'right' }}>Acciones</th>}
             </tr>
@@ -138,7 +199,7 @@ export default function PuntosTable({ refresh, onEdit, onDelete, setPuntos, empt
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ ...tdStyle, textAlign: 'center', padding: '2rem' }}>
+                <td colSpan={8} style={{ ...tdStyle, textAlign: 'center', padding: '2rem' }}>
                   Sin resultados para "{search}"
                 </td>
               </tr>
@@ -156,6 +217,31 @@ export default function PuntosTable({ refresh, onEdit, onDelete, setPuntos, empt
                   <td style={tdStyle}>{punto.zona || '—'}</td>
                   <td style={{ ...tdStyle, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>{punto.direccion || '—'}</td>
                   <td style={tdStyle}>{punto.telefono || '—'}</td>
+                  <td style={tdStyle}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      {LINEAS.map(({ key, icon, label: lineaLabel }) => (
+                        <span
+                          key={key}
+                          title={lineaLabel}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            width: 22, height: 22, borderRadius: '50%', fontSize: '0.75rem',
+                            background: punto[key] ? '#fffbeb' : T.surface,
+                            border: `1px solid ${punto[key] ? T.yellow : T.border}`,
+                            opacity: punto[key] ? 1 : 0.3,
+                          }}
+                        >
+                          {icon}
+                        </span>
+                      ))}
+                      <span style={{
+                        marginLeft: '0.2rem', fontSize: '0.6rem', fontWeight: 800,
+                        color: countLineas(punto) === 3 ? '#b91c1c' : countLineas(punto) === 2 ? '#c2410c' : T.muted,
+                      }}>
+                        {countLineas(punto)}/3
+                      </span>
+                    </div>
+                  </td>
 
                   <td style={tdStyle}>
                     <span style={{
