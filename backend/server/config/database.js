@@ -73,6 +73,18 @@ export const initDB = async () => {
       console.warn('⚠️  No se pudieron verificar/agregar columnas de líneas de producto:', e.message);
     }
 
+    // Migración idempotente: columna `proveedores` (uso interno, nunca expuesta al público).
+    try {
+      const cols = await db.execute("PRAGMA table_info(puntos_de_venta)");
+      const hasProveedores = cols.rows.some(r => (r.name ?? r[1]) === 'proveedores');
+      if (!hasProveedores) {
+        await db.execute("ALTER TABLE puntos_de_venta ADD COLUMN proveedores TEXT");
+        console.log('✅ Columna "proveedores" agregada');
+      }
+    } catch (e) {
+      console.warn('⚠️  No se pudo verificar/agregar columna proveedores:', e.message);
+    }
+
     // Insertar datos iniciales si la tabla está vacía
     const countResult = await db.execute('SELECT COUNT(*) as count FROM puntos_de_venta');
     const count = countResult.rows[0]?.[0] || 0;

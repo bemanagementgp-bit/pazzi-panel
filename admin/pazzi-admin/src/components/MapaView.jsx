@@ -31,9 +31,9 @@ const countLineas = (p) => LINEAS.reduce((n, { key }) => n + (p[key] ? 1 : 0), 0
 
 // Jerarqu\u00eda visual: a m\u00e1s l\u00edneas vendidas, marcador m\u00e1s grande y de color m\u00e1s intenso
 const TIER = {
-  3: { size: 38, color: '#c1121f', ring: '#7f0d13' },
-  2: { size: 29, color: '#ff8f00', ring: '#b35f00' },
-  1: { size: 23, color: '#ffd54f', ring: '#c9a227' },
+  3: { size: 38, color: '#2e7d32', ring: '#1b5e20' },
+  2: { size: 29, color: '#f9a825', ring: '#b45f06' },
+  1: { size: 23, color: '#c1121f', ring: '#7f0d13' },
   0: { size: 18, color: '#cbd5e1', ring: '#94a3b8' },
 };
 
@@ -146,7 +146,7 @@ export default function MapaView({ puntos: puntosExternal, refresh, setPuntos })
       const tier = TIER[countLineas(p)] ?? TIER[0];
       const size = highlight ? tier.size + 8 : tier.size;
       return L.divIcon({
-        html: `<div style="width:${size}px;height:${size}px;border-radius:50% 50% 50% 0;background:${tier.color};border:2.5px solid ${tier.ring};transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,0.35)${countLineas(p) === 3 ? ',0 0 0 3px rgba(193,18,31,0.18)' : ''}"></div>`,
+        html: `<div style="width:${size}px;height:${size}px;border-radius:50% 50% 50% 0;background:${tier.color};border:2.5px solid ${tier.ring};transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,0.35)${countLineas(p) === 3 ? ',0 0 0 3px rgba(46,125,50,0.2)' : ''}"></div>`,
         className: '', iconSize: [size, size], iconAnchor: [size / 2, size], popupAnchor: [0, -size - 6],
       });
     };

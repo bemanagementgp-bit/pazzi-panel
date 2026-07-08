@@ -193,13 +193,14 @@ export default function PuntosTable({ refresh, onEdit, onDelete, setPuntos, empt
                 Líneas {sort.key === 'lineas' && (sort.dir === 'desc' ? '▼' : '▲')}
               </th>
               <th style={thStyle}>Estado</th>
+              {isAdmin && <th style={thStyle}>Proveedores</th>}
               {isAdmin && <th style={{ ...thStyle, textAlign: 'right' }}>Acciones</th>}
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ ...tdStyle, textAlign: 'center', padding: '2rem' }}>
+                <td colSpan={9} style={{ ...tdStyle, textAlign: 'center', padding: '2rem' }}>
                   Sin resultados para "{search}"
                 </td>
               </tr>
@@ -236,7 +237,7 @@ export default function PuntosTable({ refresh, onEdit, onDelete, setPuntos, empt
                       ))}
                       <span style={{
                         marginLeft: '0.2rem', fontSize: '0.6rem', fontWeight: 800,
-                        color: countLineas(punto) === 3 ? '#b91c1c' : countLineas(punto) === 2 ? '#c2410c' : T.muted,
+                        color: countLineas(punto) === 3 ? '#2e7d32' : countLineas(punto) === 2 ? '#b45f06' : countLineas(punto) === 1 ? '#c1121f' : T.muted,
                       }}>
                         {countLineas(punto)}/3
                       </span>
@@ -255,6 +256,11 @@ export default function PuntosTable({ refresh, onEdit, onDelete, setPuntos, empt
                       {estado.label}
                     </span>
                   </td>
+                  {isAdmin && (
+                  <td style={{ ...tdStyle, maxWidth: 180, whiteSpace: 'normal', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {punto.proveedores || <span style={{ opacity: 0.4 }}>—</span>}
+                  </td>
+                  )}
                   {isAdmin && (
                   <td style={{ ...tdStyle, textAlign: 'right' }}>
                     <div style={{ display: 'inline-flex', gap: '0.35rem' }}>

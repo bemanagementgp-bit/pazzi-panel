@@ -26,6 +26,7 @@ export default function PuntoForm({ punto, onSuccess, onCancel, isAdmin }) {
   const [formData, setFormData] = useState({
     nombre: '', zona: '', direccion: '', telefono: '', lat: '', lng: '',
     vende_hamburguesa: false, vende_pancho: false, vende_sanguches: false,
+    proveedores: '',
   });
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
@@ -202,6 +203,7 @@ export default function PuntoForm({ punto, onSuccess, onCancel, isAdmin }) {
       } else {
         delete payload.lat;
         delete payload.lng;
+        delete payload.proveedores;
       }
       if (punto?.id) await puntosAPI.update(punto.id, payload);
       else await puntosAPI.create(payload);
@@ -395,6 +397,22 @@ export default function PuntoForm({ punto, onSuccess, onCancel, isAdmin }) {
             })}
           </div>
         </div>
+
+        {/* Proveedores (uso interno, solo admin) */}
+        {isAdmin && (
+          <div>
+            {label('Proveedores')}
+            <textarea
+              name="proveedores"
+              value={formData.proveedores || ''}
+              onChange={e => setFormData(prev => ({ ...prev, proveedores: e.target.value }))}
+              onFocus={onFocus} onBlur={onBlur}
+              placeholder="Nombre de proveedor/es del local (uso interno, no se muestra al público)"
+              rows={2}
+              style={{ ...inputBase, resize: 'vertical', fontFamily: "'DM Sans', system-ui, sans-serif" }}
+            />
+          </div>
+        )}
 
         {/* Lat + Lng (solo admin) */}
         {isAdmin && (

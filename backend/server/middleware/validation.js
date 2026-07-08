@@ -121,6 +121,15 @@ export const schemas = {
     vende_hamburguesa: Joi.boolean().optional().default(false),
     vende_pancho: Joi.boolean().optional().default(false),
     vende_sanguches: Joi.boolean().optional().default(false),
+    // Uso interno (proveedores del local). Nunca se expone en los endpoints públicos.
+    proveedores: safeText('Proveedores')
+      .trim()
+      .max(500)
+      .allow('')
+      .optional()
+      .messages({
+        'string.max': 'Proveedores no puede exceder 500 caracteres',
+      }),
 
   }),
 

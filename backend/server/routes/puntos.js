@@ -188,6 +188,7 @@ router.get('/vendedor/pendientes', verifyToken, async (req, res) => {
       vende_hamburguesa: !!row.vende_hamburguesa,
       vende_pancho: !!row.vende_pancho,
       vende_sanguches: !!row.vende_sanguches,
+      proveedores: row.proveedores ?? '',
       createdAt: row.createdAt, updatedAt: row.updatedAt,
     }));
     res.json(puntos);
@@ -211,6 +212,7 @@ router.get('/admin/all', verifyAdmin, async (req, res) => {
       vende_hamburguesa: !!row.vende_hamburguesa,
       vende_pancho: !!row.vende_pancho,
       vende_sanguches: !!row.vende_sanguches,
+      proveedores: row.proveedores ?? '',
       createdAt: row.createdAt, updatedAt: row.updatedAt,
     }));
     res.json(puntos);
@@ -297,14 +299,14 @@ router.post(
   validate(schemas.punto),
   async (req, res) => {
     try {
-      const { nombre, zona, direccion, telefono, lat, lng, vende_hamburguesa, vende_pancho, vende_sanguches } = req.body;
+      const { nombre, zona, direccion, telefono, lat, lng, vende_hamburguesa, vende_pancho, vende_sanguches, proveedores } = req.body;
       const estadoInicial = req.user?.role === 'admin' ? 'aprobado' : 'pendiente';
       const createdBy = req.user?.email || null;
 
       const result = await db.execute({
         sql: `INSERT INTO puntos_de_venta
-                (nombre, zona, direccion, telefono, lat, lng, estado, createdBy, vende_hamburguesa, vende_pancho, vende_sanguches)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                (nombre, zona, direccion, telefono, lat, lng, estado, createdBy, vende_hamburguesa, vende_pancho, vende_sanguches, proveedores)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         args: [
           nombre,
           zona,
@@ -317,6 +319,7 @@ router.post(
           vende_hamburguesa ? 1 : 0,
           vende_pancho ? 1 : 0,
           vende_sanguches ? 1 : 0,
+          proveedores || null,
         ],
       });
 
@@ -345,7 +348,7 @@ router.put(
   validate(schemas.punto),
   async (req, res) => {
     try {
-      const { nombre, zona, direccion, telefono, lat, lng, vende_hamburguesa, vende_pancho, vende_sanguches } = req.body;
+      const { nombre, zona, direccion, telefono, lat, lng, vende_hamburguesa, vende_pancho, vende_sanguches, proveedores } = req.body;
       const { id } = req.params;
 
       const selectResult = await db.execute({
@@ -373,15 +376,17 @@ router.put(
       const newVendeHamburguesa = vende_hamburguesa !== undefined ? (vende_hamburguesa ? 1 : 0) : row.vende_hamburguesa;
       const newVendePancho      = vende_pancho !== undefined ? (vende_pancho ? 1 : 0) : row.vende_pancho;
       const newVendeSanguches   = vende_sanguches !== undefined ? (vende_sanguches ? 1 : 0) : row.vende_sanguches;
+      const newProveedores      = proveedores !== undefined ? proveedores : row.proveedores;
 
       await db.execute({
         sql: `UPDATE puntos_de_venta
                  SET nombre = ?, zona = ?, direccion = ?, telefono = ?,
                      lat = ?, lng = ?, estado = 'aprobado',
                      vende_hamburguesa = ?, vende_pancho = ?, vende_sanguches = ?,
+                     proveedores = ?,
                      updatedAt = CURRENT_TIMESTAMP
                WHERE id = ?`,
-        args: [newNombre, newZona, newDireccion, newTelefono, newLat, newLng, newVendeHamburguesa, newVendePancho, newVendeSanguches, id],
+        args: [newNombre, newZona, newDireccion, newTelefono, newLat, newLng, newVendeHamburguesa, newVendePancho, newVendeSanguches, newProveedores, id],
       });
 
       const changes = {};
