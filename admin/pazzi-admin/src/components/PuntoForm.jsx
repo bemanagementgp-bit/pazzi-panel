@@ -407,6 +407,7 @@ export default function PuntoForm({ punto, onSuccess, onCancel, isAdmin }) {
               value={formData.proveedores || ''}
               onChange={e => setFormData(prev => ({ ...prev, proveedores: e.target.value }))}
               onFocus={onFocus} onBlur={onBlur}
+              placeholder="Nombre de proveedor/es del local (uso interno, no se muestra al público)"
               rows={2}
               style={{ ...inputBase, resize: 'vertical', fontFamily: "'DM Sans', system-ui, sans-serif" }}
             />
