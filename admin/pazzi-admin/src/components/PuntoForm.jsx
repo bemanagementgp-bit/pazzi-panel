@@ -67,8 +67,8 @@ export default function PuntoForm({ punto, onSuccess, onCancel, isAdmin }) {
       const initLat = parseFloat(formData.lat) || -34.6037;
       const initLng = parseFloat(formData.lng) || -58.3816;
       const map = L.map(miniMapRef.current, { center: [initLat, initLng], zoom: 13 });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: ' © OpenStreetMap contributors', maxZoom: 19,
+      L.tileLayer('https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG:3857@png/{z}/{x}/{-y}.png', {
+        attribution: 'Instituto Geográfico Nacional', maxZoom: 18,
       }).addTo(map);
 
       const yellowIcon = L.divIcon({

@@ -83,8 +83,8 @@ export default function MapaView({ puntos: puntosExternal, refresh, setPuntos })
         shadowUrl:     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
       });
       const map = L.map(mapRef.current, { center: [-38, -63], zoom: 5 });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors', maxZoom: 19,
+      L.tileLayer('https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG:3857@png/{z}/{x}/{-y}.png', {
+        attribution: 'Instituto Geográfico Nacional', maxZoom: 18,
       }).addTo(map);
       leafletRef.current = { map, L };
       setMapReady(true);
