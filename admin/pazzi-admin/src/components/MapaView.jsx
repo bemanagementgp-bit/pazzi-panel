@@ -161,8 +161,7 @@ export default function MapaView({ puntos: puntosExternal, refresh, setPuntos })
         .bindPopup(`
           <div style="font-family:'DM Sans',sans-serif;min-width:190px;padding:4px 0">
             <div style="font-weight:800;font-size:0.82rem;color:#0f172a;margin-bottom:4px">${p.nombre}</div>
-            <div style="font-size:0.7rem;color:#64748b;margin-bottom:2px">📍 ${p.direccion}</div>
-            <div style="font-size:0.7rem;color:#64748b;margin-bottom:6px">📞 ${p.telefono}</div>
+            <div style="font-size:0.7rem;color:#64748b;margin-bottom:6px">📍 ${p.direccion}</div>
             <div style="margin-bottom:6px">${lineasChips(p)}<span style="font-size:0.6rem;font-weight:700;color:#0f172a;margin-left:4px">${countLineas(p)}/3 líneas</span></div>
             ${p._dist != null ? `<div style="font-size:0.65rem;color:#0f172a;font-weight:700;margin-bottom:6px">🚶 ${p._dist < 1 ? (p._dist*1000).toFixed(0)+' m' : p._dist.toFixed(1)+' km'}</div>` : ''}
             <span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:0.58rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;background:#fef9c3;color:#92400e">${p.zona}</span>

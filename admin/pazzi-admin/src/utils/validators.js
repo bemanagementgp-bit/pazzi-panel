@@ -138,10 +138,6 @@ export const validatePuntoForm = (data) => {
     errors.direccion = validators.address.message;
   }
 
-  if (!isValidPhone(data.telefono)) {
-    errors.telefono = validators.phone.message;
-  }
-
   if (!isValidLatitude(data.lat)) {
     errors.lat = validators.latitude.message;
   }

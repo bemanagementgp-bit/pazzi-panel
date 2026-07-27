@@ -2,7 +2,6 @@ import { useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import { puntosAPI } from '../services/api.js';
-import { normalizeArgPhone } from '../utils/phone.js';
 
 const T = {
   ink:    '#111827',
@@ -14,12 +13,11 @@ const T = {
   red:    '#dc2626',
 };
 
-const COLS    = ['nombre', 'zona', 'direccion', 'telefono'];
+const COLS    = ['nombre', 'zona', 'direccion'];
 const HEADERS = {
   nombre:    'Nombre del local',
   zona:      'Zona / Barrio',
   direccion: 'Dirección completa',
-  telefono:  'Teléfono',
 };
 
 // === Límites anti-DoS para la importación de archivos ===
@@ -42,11 +40,11 @@ const sanitizeCell = (value) => {
 };
 
 const EJEMPLOS = [
-  { nombre: 'Pazzi Palermo',       zona: 'Palermo',       direccion: 'Av. Santa Fe 3200, CABA',              telefono: '+54 9 11 1234-5678' },
-  { nombre: 'Pazzi Belgrano',      zona: 'Belgrano',      direccion: 'Cabildo 2150, CABA',                   telefono: '+54 9 11 2345-6789' },
-  { nombre: 'Pazzi San Telmo',     zona: 'San Telmo',     direccion: 'Defensa 890, CABA',                    telefono: '+54 9 11 3456-7890' },
-  { nombre: 'Pazzi Recoleta',      zona: 'Recoleta',      direccion: 'Av. Callao 1200, CABA',                telefono: '+54 9 11 4567-8901' },
-  { nombre: 'Pazzi Villa Crespo',  zona: 'Villa Crespo',  direccion: 'Corrientes 5400, CABA',                telefono: '+54 9 11 5678-9012' },
+  { nombre: 'Pazzi Palermo',       zona: 'Palermo',       direccion: 'Av. Santa Fe 3200, CABA' },
+  { nombre: 'Pazzi Belgrano',      zona: 'Belgrano',      direccion: 'Cabildo 2150, CABA' },
+  { nombre: 'Pazzi San Telmo',     zona: 'San Telmo',     direccion: 'Defensa 890, CABA' },
+  { nombre: 'Pazzi Recoleta',      zona: 'Recoleta',      direccion: 'Av. Callao 1200, CABA' },
+  { nombre: 'Pazzi Villa Crespo',  zona: 'Villa Crespo',  direccion: 'Corrientes 5400, CABA' },
 ];
 
 export default function ExcelImportExport({ isAdmin, onImportDone }) {
@@ -75,11 +73,10 @@ export default function ExcelImportExport({ isAdmin, onImportDone }) {
       { key: 'nombre',    width: 30 },
       { key: 'zona',      width: 22 },
       { key: 'direccion', width: 40 },
-      { key: 'telefono',  width: 24 },
     ];
 
     // Fila 1 — Título
-    ws.mergeCells('A1:D1');
+    ws.mergeCells('A1:C1');
     const titleCell = ws.getCell('A1');
     titleCell.value         = '🥐 PAZZI BUNS — Puntos de Venta';
     titleCell.font          = { name: 'Arial', bold: true, size: 13, color: { argb: 'FF111827' } };
@@ -88,7 +85,7 @@ export default function ExcelImportExport({ isAdmin, onImportDone }) {
     ws.getRow(1).height     = 32;
 
     // Fila 2 — instrucción
-    ws.mergeCells('A2:D2');
+    ws.mergeCells('A2:C2');
     const subCell = ws.getCell('A2');
     subCell.value       = 'Podés agregar nuevas filas al final. No modifiques los encabezados.';
     subCell.font        = { name: 'Arial', italic: true, size: 9, color: { argb: 'FF6B7280' } };
@@ -98,7 +95,7 @@ export default function ExcelImportExport({ isAdmin, onImportDone }) {
 
     // Fila 3 — Headers
     const headerRow = ws.getRow(3);
-    const headerLabels = [HEADERS.nombre, HEADERS.zona, HEADERS.direccion, HEADERS.telefono];
+    const headerLabels = [HEADERS.nombre, HEADERS.zona, HEADERS.direccion];
     headerLabels.forEach((label, i) => {
       const cell = headerRow.getCell(i + 1);
       cell.value     = label;
@@ -120,7 +117,6 @@ export default function ExcelImportExport({ isAdmin, onImportDone }) {
         sanitizeCell(item.nombre),
         sanitizeCell(item.zona),
         sanitizeCell(item.direccion),
-        sanitizeCell(item.telefono),
       ]);
       const even = idx % 2 === 0;
       row.eachCell((cell) => {
@@ -193,7 +189,6 @@ export default function ExcelImportExport({ isAdmin, onImportDone }) {
           if (kl.includes('nombre'))   m.nombre    = String(v).trim();
           if (kl.includes('zona'))     m.zona      = String(v).trim();
           if (kl.includes('direcci'))  m.direccion = String(v).trim();
-          if (kl.includes('tel'))      m.telefono  = String(v).trim();
         }
         return m;
       };
@@ -220,15 +215,6 @@ export default function ExcelImportExport({ isAdmin, onImportDone }) {
         if (!d.nombre)    { errores.push({ fila, motivo: 'Falta el nombre' });    continue; }
         if (!d.zona)      { errores.push({ fila, motivo: 'Falta la zona' });      continue; }
         if (!d.direccion) { errores.push({ fila, motivo: 'Falta la dirección' }); continue; }
-        if (!d.telefono)  { errores.push({ fila, motivo: 'Falta el teléfono' });  continue; }
-
-        // Normalizar teléfono al formato canónico +54 9 <area> XXXX-XXX(X)
-        const telefonoNorm = normalizeArgPhone(d.telefono);
-        if (!telefonoNorm) {
-          errores.push({ fila, motivo: `Teléfono inválido: "${d.telefono}"` });
-          continue;
-        }
-        d.telefono = telefonoNorm;
 
         // Chequeo de duplicados: mismo nombre Y misma dirección (normalizado)
         const isDuplicate = existentes.some(
@@ -245,7 +231,6 @@ export default function ExcelImportExport({ isAdmin, onImportDone }) {
           nombre:    d.nombre,
           zona:      d.zona,
           direccion: d.direccion,
-          telefono:  d.telefono,
         };
 
         try {

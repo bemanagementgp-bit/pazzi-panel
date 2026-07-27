@@ -149,7 +149,6 @@ router.get('/', async (req, res) => {
       nombre: row.nombre,
       zona: row.zona,
       direccion: row.direccion,
-      telefono: row.telefono,
       lat: row.lat,
       lng: row.lng,
       estado: row.estado,
@@ -183,7 +182,7 @@ router.get('/vendedor/pendientes', verifyToken, async (req, res) => {
 
     const puntos = result.rows.map(row => ({
       id: row.id, nombre: row.nombre, zona: row.zona, direccion: row.direccion,
-      telefono: row.telefono, lat: row.lat, lng: row.lng,
+      lat: row.lat, lng: row.lng,
       estado: row.estado,
       vende_hamburguesa: !!row.vende_hamburguesa,
       vende_pancho: !!row.vende_pancho,
@@ -207,7 +206,7 @@ router.get('/admin/all', verifyAdmin, async (req, res) => {
     });
     const puntos = result.rows.map(row => ({
       id: row.id, nombre: row.nombre, zona: row.zona, direccion: row.direccion,
-      telefono: row.telefono, lat: row.lat, lng: row.lng,
+      lat: row.lat, lng: row.lng,
       estado: row.estado,
       vende_hamburguesa: !!row.vende_hamburguesa,
       vende_pancho: !!row.vende_pancho,
@@ -275,7 +274,6 @@ router.get('/:id', validateParams(schemas.id), async (req, res) => {
       nombre: row.nombre,
       zona: row.zona,
       direccion: row.direccion,
-      telefono: row.telefono,
       lat: row.lat,
       lng: row.lng,
       estado: row.estado,
@@ -299,19 +297,18 @@ router.post(
   validate(schemas.punto),
   async (req, res) => {
     try {
-      const { nombre, zona, direccion, telefono, lat, lng, vende_hamburguesa, vende_pancho, vende_sanguches, proveedores } = req.body;
+      const { nombre, zona, direccion, lat, lng, vende_hamburguesa, vende_pancho, vende_sanguches, proveedores } = req.body;
       const estadoInicial = req.user?.role === 'admin' ? 'aprobado' : 'pendiente';
       const createdBy = req.user?.email || null;
 
       const result = await db.execute({
         sql: `INSERT INTO puntos_de_venta
-                (nombre, zona, direccion, telefono, lat, lng, estado, createdBy, vende_hamburguesa, vende_pancho, vende_sanguches, proveedores)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                (nombre, zona, direccion, lat, lng, estado, createdBy, vende_hamburguesa, vende_pancho, vende_sanguches, proveedores)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         args: [
           nombre,
           zona,
           direccion,
-          telefono,
           lat == null || Number.isNaN(lat) ? null : lat,
           lng == null || Number.isNaN(lng) ? null : lng,
           estadoInicial,
@@ -324,7 +321,7 @@ router.post(
       });
 
       auditLog('CREATE', createdBy || 'unknown', 'punto_de_venta', null, {
-        nombre, zona, direccion, telefono,
+        nombre, zona, direccion,
       });
       logger.info('Punto creado', { nombre, zona, createdBy });
 
@@ -348,7 +345,7 @@ router.put(
   validate(schemas.punto),
   async (req, res) => {
     try {
-      const { nombre, zona, direccion, telefono, lat, lng, vende_hamburguesa, vende_pancho, vende_sanguches, proveedores } = req.body;
+      const { nombre, zona, direccion, lat, lng, vende_hamburguesa, vende_pancho, vende_sanguches, proveedores } = req.body;
       const { id } = req.params;
 
       const selectResult = await db.execute({
@@ -364,13 +361,11 @@ router.put(
         nombre: row.nombre,
         zona: row.zona,
         direccion: row.direccion,
-        telefono: row.telefono,
       };
 
       const newNombre    = nombre    ?? row.nombre;
       const newZona      = zona      ?? row.zona;
       const newDireccion = direccion ?? row.direccion;
-      const newTelefono  = telefono  ?? row.telefono;
       const newLat       = lat !== undefined ? lat : row.lat;
       const newLng       = lng !== undefined ? lng : row.lng;
       const newVendeHamburguesa = vende_hamburguesa !== undefined ? (vende_hamburguesa ? 1 : 0) : row.vende_hamburguesa;
@@ -380,20 +375,19 @@ router.put(
 
       await db.execute({
         sql: `UPDATE puntos_de_venta
-                 SET nombre = ?, zona = ?, direccion = ?, telefono = ?,
+                 SET nombre = ?, zona = ?, direccion = ?,
                      lat = ?, lng = ?, estado = 'aprobado',
                      vende_hamburguesa = ?, vende_pancho = ?, vende_sanguches = ?,
                      proveedores = ?,
                      updatedAt = CURRENT_TIMESTAMP
                WHERE id = ?`,
-        args: [newNombre, newZona, newDireccion, newTelefono, newLat, newLng, newVendeHamburguesa, newVendePancho, newVendeSanguches, newProveedores, id],
+        args: [newNombre, newZona, newDireccion, newLat, newLng, newVendeHamburguesa, newVendePancho, newVendeSanguches, newProveedores, id],
       });
 
       const changes = {};
       if (nombre    && nombre    !== oldData.nombre)    changes.nombre    = { old: oldData.nombre, new: nombre };
       if (zona      && zona      !== oldData.zona)      changes.zona      = { old: oldData.zona, new: zona };
       if (direccion && direccion !== oldData.direccion) changes.direccion = { old: oldData.direccion, new: direccion };
-      if (telefono  && telefono  !== oldData.telefono)  changes.telefono  = { old: oldData.telefono, new: telefono };
 
       auditLog('UPDATE', req.user?.email || 'unknown', 'punto_de_venta', id, changes);
       logger.info('Punto actualizado', { id, nombre: newNombre });

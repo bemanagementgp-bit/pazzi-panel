@@ -4,13 +4,13 @@
     {
       "name": "pazzi-backend-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "backend", "run", "dev"],
+      "runtimeArgs": ["--prefix", "backend/server", "run", "dev"],
       "port": 3000
     },
     {
       "name": "pazzi-admin-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "admin", "run", "dev", "--", "--port", "5183"],
+      "runtimeArgs": ["--prefix", "admin/pazzi-admin", "run", "dev", "--", "--port", "5183"],
       "port": 5183
     }
   ]

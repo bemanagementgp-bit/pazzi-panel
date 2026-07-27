@@ -121,7 +121,6 @@ describe('API Endpoints - Protegidos', () => {
           nombre: 'Test Pizza',
           zona: 'Zona Norte',
           direccion: 'Test St',
-          telefono: '+34987654321',
           lat: 40.42,
           lng: -3.71
         });
@@ -137,7 +136,6 @@ describe('API Endpoints - Protegidos', () => {
           nombre: 'Test Pizza Create',
           zona: 'Zona Norte',
           direccion: 'Test St 789',
-          telefono: '+34987654321',
           lat: 40.42,
           lng: -3.71
         });
@@ -155,7 +153,6 @@ describe('API Endpoints - Protegidos', () => {
           nombre: 'Test Pizza',
           zona: 'InvalidZone',
           direccion: 'Test St',
-          telefono: '+34987654321',
           lat: 40.42,
           lng: -3.71
         });
@@ -172,7 +169,6 @@ describe('API Endpoints - Protegidos', () => {
           nombre: 'Test Pizza',
           zona: 'Zona Norte',
           direccion: 'Test St',
-          telefono: '+34987654321',
           lat: 95, // Fuera de rango
           lng: -3.71
         });

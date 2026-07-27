@@ -105,7 +105,7 @@ export default function SolicitudesView({ refresh, onRefresh }) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.74rem' }}>
             <thead>
               <tr style={{ background: T.bg }}>
-                {['Nombre', 'Zona', 'Dirección', 'Teléfono', 'Acciones'].map(col => (
+                {['Nombre', 'Zona', 'Dirección', 'Acciones'].map(col => (
                   <th key={col} style={{
                     padding: '0.55rem 0.9rem', textAlign: 'left',
                     fontWeight: 700, fontSize: '0.62rem', letterSpacing: '0.07em',
@@ -123,7 +123,6 @@ export default function SolicitudesView({ refresh, onRefresh }) {
                   <td style={{ padding: '0.7rem 0.9rem', color: T.muted, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {p.direccion || '—'}
                   </td>
-                  <td style={{ padding: '0.7rem 0.9rem', color: T.muted }}>{p.telefono || '—'}</td>
                   <td style={{ padding: '0.7rem 0.9rem' }}>
                     <div style={{ display: 'flex', gap: '0.4rem' }}>
                       {/* Aprobar → abre formulario de revisión */}

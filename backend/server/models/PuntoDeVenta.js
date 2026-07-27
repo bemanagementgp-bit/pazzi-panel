@@ -30,10 +30,6 @@ const PuntoDeVenta = sequelize.define('PuntoDeVenta', {
     type: DataTypes.STRING(255),
     allowNull: false,
   },
-  telefono: {
-    type: DataTypes.STRING(20),
-    allowNull: false,
-  },
   lat: {
     type: DataTypes.FLOAT,
     allowNull: false,

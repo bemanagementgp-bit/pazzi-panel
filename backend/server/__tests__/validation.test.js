@@ -57,7 +57,6 @@ describe('Input Validation - Joi Schemas', () => {
         nombre: 'Pizzería Test',
         zona: 'Zona Norte',
         direccion: 'Calle Principal 123',
-        telefono: '+34987654321',
         lat: 40.4168,
         lng: -3.7038
       };
@@ -70,7 +69,6 @@ describe('Input Validation - Joi Schemas', () => {
         nombre: 'AB',
         zona: 'Zona Norte',
         direccion: 'Calle Principal 123',
-        telefono: '+34987654321',
         lat: 40.4168,
         lng: -3.7038
       };
@@ -84,7 +82,6 @@ describe('Input Validation - Joi Schemas', () => {
         nombre: 'Pizzería Test',
         zona: 'Zona Inexistente',
         direccion: 'Calle Principal 123',
-        telefono: '+34987654321',
         lat: 40.4168,
         lng: -3.7038
       };
@@ -98,7 +95,6 @@ describe('Input Validation - Joi Schemas', () => {
         nombre: 'Pizzería Test',
         zona: 'Zona Norte',
         direccion: 'Calle Principal 123',
-        telefono: '+34987654321',
         lat: 95,
         lng: -3.7038
       };
@@ -112,27 +108,12 @@ describe('Input Validation - Joi Schemas', () => {
         nombre: 'Pizzería Test',
         zona: 'Zona Norte',
         direccion: 'Calle Principal 123',
-        telefono: '+34987654321',
         lat: 40.4168,
         lng: -200
       };
       const result = schema.validate(data);
       expect(result.error).toBeDefined();
       expect(result.error.message).toContain('longitud');
-    });
-
-    test('Rechaza teléfono con formato inválido', async () => {
-      const data = {
-        nombre: 'Pizzería Test',
-        zona: 'Zona Norte',
-        direccion: 'Calle Principal 123',
-        telefono: 'invalid-phone',
-        lat: 40.4168,
-        lng: -3.7038
-      };
-      const result = schema.validate(data);
-      expect(result.error).toBeDefined();
-      expect(result.error.message).toContain('teléfono');
     });
   });
 

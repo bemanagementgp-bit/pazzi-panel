@@ -130,7 +130,6 @@ const startServer = async () => {
               nombre: 'Pazzi Buns - Sede Central',
               zona: 'CABA',
               direccion: 'Av. Corrientes 1234',
-              telefono: '+54 11 1234-5678',
               lat: -34.603722,
               lng: -58.381592,
               horario: '09:00 - 22:00',
@@ -155,7 +154,6 @@ const startServer = async () => {
             nombre: 'Pazzi Buns - Nueva Sucursal',
             zona: 'CABA',
             direccion: 'Calle Nueva 123',
-            telefono: '+54 11 9999-9999',
             lat: -34.603722,
             lng: -58.381592,
             horario: '10:00 - 22:00'

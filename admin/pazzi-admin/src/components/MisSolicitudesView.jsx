@@ -97,7 +97,6 @@ export default function MisSolicitudesView({ refresh }) {
               <th style={thStyle}>Nombre</th>
               <th style={thStyle}>Zona</th>
               <th style={thStyle}>Dirección</th>
-              <th style={thStyle}>Teléfono</th>
               <th style={thStyle}>Enviado</th>
               <th style={thStyle}>Estado</th>
             </tr>
@@ -111,7 +110,6 @@ export default function MisSolicitudesView({ refresh }) {
                 <td style={{ ...tdStyle, color: T.ink, fontWeight: 600 }}>{p.nombre}</td>
                 <td style={tdStyle}>{p.zona || '—'}</td>
                 <td style={{ ...tdStyle, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.direccion || '—'}</td>
-                <td style={tdStyle}>{p.telefono || '—'}</td>
                 <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
                   {p.createdAt ? new Date(p.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
                 </td>

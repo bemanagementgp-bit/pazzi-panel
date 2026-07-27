@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { puntosAPI } from '../services/api.js';
 import { TODAS, getRegion } from '../utils/localidades.js';
-import { normalizeArgPhone } from '../utils/phone.js';
 
 const T = {
   yellow: '#ffb800',
@@ -24,7 +23,7 @@ const LINEAS = [
 
 export default function PuntoForm({ punto, onSuccess, onCancel, isAdmin }) {
   const [formData, setFormData] = useState({
-    nombre: '', zona: '', direccion: '', telefono: '', lat: '', lng: '',
+    nombre: '', zona: '', direccion: '', lat: '', lng: '',
     vende_hamburguesa: false, vende_pancho: false, vende_sanguches: false,
     proveedores: '',
   });
@@ -170,33 +169,13 @@ export default function PuntoForm({ punto, onSuccess, onCancel, isAdmin }) {
     setFormData(prev => ({ ...prev, [name]: (name === 'lat' || name === 'lng') ? value : value }));
   };
 
-  // Normaliza el teléfono al perder foco. Si la entrada es válida queda
-  // como `+54 9 <area> XXXX-XXX(X)`; si no, se deja como está y la validación
-  // del servidor (que usa el mismo algoritmo) devolverá el error.
-  const handleTelefonoBlur = (e) => {
-    const raw = e.target.value;
-    if (!raw?.trim()) return;
-    const normalized = normalizeArgPhone(raw);
-    if (normalized) {
-      setFormData(prev => ({ ...prev, telefono: normalized }));
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    // Si el usuario escribió algo en zona pero no seleccionó del dropdown, usarlo igual
     const zonaFinal = formData.zona || zonaSearch.trim();
-    // Normalización final del teléfono antes de enviar.
-    const telefonoNormalizado = normalizeArgPhone(formData.telefono);
-    if (!telefonoNormalizado) {
-      setError('Teléfono inválido. Formato esperado: +54 9 11 1234-5678');
-      setLoading(false);
-      return;
-    }
     try {
-      const payload = { ...formData, zona: zonaFinal, telefono: telefonoNormalizado };
+      const payload = { ...formData, zona: zonaFinal };
       if (isAdmin) {
         payload.lat = parseFloat(formData.lat) || null;
         payload.lng = parseFloat(formData.lng) || null;
@@ -355,14 +334,6 @@ export default function PuntoForm({ punto, onSuccess, onCancel, isAdmin }) {
             }}>{geoMsg}</div>
           )}
         </div>
-
-        {/* Teléfono */}
-        {field('Teléfono', true,
-          <input type="tel" name="telefono" value={formData.telefono} onChange={handleChange}
-            onFocus={onFocus}
-            onBlur={(e) => { handleTelefonoBlur(e); onBlur(e); }}
-            required placeholder="+54 9 11 1234-5678" style={inputBase} />
-        )}
 
         {/* Líneas que vende */}
         <div>

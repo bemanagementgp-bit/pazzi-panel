@@ -1,5 +1,4 @@
 import Joi from 'joi';
-import { normalizeArgPhone } from '../utils/phone.js';
 
 /**
  * Schemas de validación para todos los endpoints.
@@ -88,17 +87,6 @@ export const schemas = {
         'string.min': 'Dirección debe tener al menos 5 caracteres',
         'string.max': 'Dirección no puede exceder 255 caracteres',
         'any.required': 'Dirección es requerida',
-      }),
-    telefono: Joi.string()
-      .required()
-      .custom((value, helpers) => {
-        const normalized = normalizeArgPhone(value);
-        if (!normalized) return helpers.error('string.phoneInvalid');
-        return normalized;
-      })
-      .messages({
-        'string.phoneInvalid': 'Teléfono inválido. Formato esperado: +54 9 11 1234-5678',
-        'any.required': 'Teléfono es requerido',
       }),
     lat: Joi.number()
       .min(-90)

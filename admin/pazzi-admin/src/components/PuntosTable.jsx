@@ -34,6 +34,7 @@ export default function PuntosTable({ refresh, onEdit, onDelete, setPuntos, empt
   const [hovered, setHovered]    = useState(null);
   const [lineaFilter, setLineaFilter] = useState([]);   // keys de LINEAS activos como filtro
   const [sort, setSort]          = useState({ key: null, dir: 'desc' });
+  const [toggling, setToggling]  = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -49,6 +50,19 @@ export default function PuntosTable({ refresh, onEdit, onDelete, setPuntos, empt
   }, [isAdmin, refresh]);
 
   useEffect(() => { load(); }, [load]);
+
+  const toggleEstado = async (punto) => {
+    const nuevoEstado = punto.estado === 'aprobado' ? 'pendiente' : 'aprobado';
+    setToggling(punto.id);
+    try {
+      await puntosAPI.updateEstado(punto.id, nuevoEstado);
+      setPuntosLocal(prev => prev.map(p => p.id === punto.id ? { ...p, estado: nuevoEstado } : p));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setToggling(null);
+    }
+  };
 
   const toggleLineaFilter = (key) => {
     setLineaFilter(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
@@ -184,7 +198,6 @@ export default function PuntosTable({ refresh, onEdit, onDelete, setPuntos, empt
               <th style={thStyle}>Nombre</th>
               <th style={thStyle}>Zona</th>
               <th style={thStyle}>Dirección</th>
-              <th style={thStyle}>Teléfono</th>
               <th
                 style={{ ...thStyle, cursor: 'pointer', userSelect: 'none' }}
                 onClick={() => toggleSort('lineas')}
@@ -217,7 +230,6 @@ export default function PuntosTable({ refresh, onEdit, onDelete, setPuntos, empt
                   <td style={{ ...tdStyle, color: T.ink, fontWeight: 600 }}>{punto.nombre}</td>
                   <td style={tdStyle}>{punto.zona || '—'}</td>
                   <td style={{ ...tdStyle, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>{punto.direccion || '—'}</td>
-                  <td style={tdStyle}>{punto.telefono || '—'}</td>
                   <td style={tdStyle}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                       {LINEAS.map(({ key, icon, label: lineaLabel }) => (
@@ -245,16 +257,42 @@ export default function PuntosTable({ refresh, onEdit, onDelete, setPuntos, empt
                   </td>
 
                   <td style={tdStyle}>
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center',
-                      padding: '0.18rem 0.55rem', borderRadius: 3,
-                      fontSize: '0.6rem', fontWeight: 700,
-                      letterSpacing: '0.06em', textTransform: 'uppercase',
-                      background: estado.bg, color: estado.color,
-                      fontFamily: "'DM Sans', system-ui, sans-serif",
-                    }}>
-                      {estado.label}
-                    </span>
+                    {isAdmin ? (
+                      <button
+                        onClick={() => toggleEstado(punto)}
+                        disabled={toggling === punto.id}
+                        title={punto.estado === 'aprobado' ? 'Desactivar (pasar a pendiente)' : 'Activar (pasar a aprobado)'}
+                        style={{
+                          position: 'relative', display: 'inline-flex', alignItems: 'center',
+                          width: 44, height: 24, borderRadius: 99, border: 'none', padding: 0,
+                          cursor: toggling === punto.id ? 'wait' : 'pointer',
+                          background: punto.estado === 'aprobado' ? '#22c55e' : '#d1d5db',
+                          transition: 'background 0.2s',
+                          opacity: toggling === punto.id ? 0.6 : 1,
+                          flexShrink: 0,
+                        }}
+                      >
+                        <span style={{
+                          position: 'absolute',
+                          left: punto.estado === 'aprobado' ? 22 : 2,
+                          width: 20, height: 20, borderRadius: '50%',
+                          background: '#fff',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                          transition: 'left 0.2s',
+                        }} />
+                      </button>
+                    ) : (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center',
+                        padding: '0.18rem 0.55rem', borderRadius: 3,
+                        fontSize: '0.6rem', fontWeight: 700,
+                        letterSpacing: '0.06em', textTransform: 'uppercase',
+                        background: estado.bg, color: estado.color,
+                        fontFamily: "'DM Sans', system-ui, sans-serif",
+                      }}>
+                        {estado.label}
+                      </span>
+                    )}
                   </td>
                   {isAdmin && (
                   <td style={{ ...tdStyle, maxWidth: 180, whiteSpace: 'normal', overflow: 'hidden', textOverflow: 'ellipsis' }}>
