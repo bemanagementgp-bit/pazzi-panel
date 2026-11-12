@@ -9,6 +9,7 @@ import { validate, validateParams, schemas } from '../middleware/validation.js';
 import { loginLimiter, createUpdateDeleteLimiter } from '../middleware/rateLimiters.js';
 import { revokeJti } from '../utils/tokenStore.js';
 import logger, { auditLog, securityLog } from '../utils/logger.js';
+import { notificarSolicitudPunto } from '../utils/notificaciones.js';
 
 dotenv.config();
 const router = express.Router();
@@ -324,6 +325,15 @@ router.post(
         nombre, zona, direccion,
       });
       logger.info('Punto creado', { nombre, zona, createdBy });
+
+      // Si lo cargó el vendedor queda pendiente: avisar al admin por mail.
+      // No se espera el envío; un fallo del mail no afecta la respuesta.
+      if (estadoInicial === 'pendiente') {
+        notificarSolicitudPunto({
+          nombre, zona, direccion, createdBy,
+          vende_hamburguesa, vende_pancho, vende_sanguches,
+        });
+      }
 
       res.status(201).json({
         message: 'Punto de venta creado exitosamente',

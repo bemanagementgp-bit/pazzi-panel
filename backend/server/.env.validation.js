@@ -17,6 +17,12 @@ const requiredEnvVars = [
 const optionalEnvVars = [
   'LOG_LEVEL',
   'LOG_DIR',
+  // Mails al admin por solicitudes del vendedor (utils/notificaciones.js)
+  'RESEND_API_KEY',
+  'RESEND_FROM',
+  'ADMIN_NOTIFY_EMAIL',
+  'PANEL_URL',
+  'NOTIFY_DELAY_MS',
 ];
 
 /**
