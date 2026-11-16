@@ -104,6 +104,19 @@ export const armarMail = (solicitudes, panelUrl) => {
   return { subject, html, text };
 };
 
+// Resultado del último intento, para poder diagnosticar sin entrar a los logs.
+// Las direcciones se tapan: este dato se expone en la ruta raíz, que es pública.
+let ultimoEnvio = null;
+
+const sinMails = (texto) =>
+  String(texto ?? '').replace(/[\w.+-]+@[\w.-]+\.\w+/g, '***');
+
+const anotar = (resultado) => {
+  ultimoEnvio = { cuando: new Date().toISOString(), ...resultado };
+};
+
+export const ultimoEnvioMail = () => ultimoEnvio;
+
 const enviarPendientes = async () => {
   timer = null;
   const lote = pendientes;
@@ -117,6 +130,7 @@ const enviarPendientes = async () => {
     logger.warn('Notificación por mail omitida: falta RESEND_API_KEY, RESEND_FROM o el destinatario', {
       solicitudes: lote.length,
     });
+    anotar({ estado: 'omitido', motivo: 'falta RESEND_API_KEY, RESEND_FROM o el destinatario' });
     return;
   }
 
@@ -132,11 +146,14 @@ const enviarPendientes = async () => {
     if (!res.ok) {
       const detalle = await res.text().catch(() => '');
       logger.error('Resend rechazó el mail de solicitudes', { status: res.status, detalle: detalle.slice(0, 300) });
+      anotar({ estado: 'rechazado', status: res.status, motivo: sinMails(detalle).slice(0, 300) });
       return;
     }
     logger.info('Mail de solicitudes enviado al admin', { solicitudes: lote.length });
+    anotar({ estado: 'enviado', solicitudes: lote.length });
   } catch (error) {
     logger.error('Error enviando mail de solicitudes', { error: error.message });
+    anotar({ estado: 'error', motivo: sinMails(error.message) });
   }
 };
 

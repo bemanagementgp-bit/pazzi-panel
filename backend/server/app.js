@@ -7,7 +7,7 @@ import puntosRoutes from './routes/puntos.js';
 import validateEnv from './.env.validation.js';
 import logger, { loggerMiddleware } from './utils/logger.js';
 import { apiLimiter } from './middleware/rateLimiters.js';
-import { estadoNotificaciones } from './utils/notificaciones.js';
+import { estadoNotificaciones, ultimoEnvioMail } from './utils/notificaciones.js';
 
 dotenv.config();
 
@@ -95,6 +95,7 @@ const startServer = async () => {
       // qué variables faltan: nombres que ya están publicados en .env.example.
       // Nunca expone la API key ni los destinatarios.
       avisosMail: estadoNotificaciones().activo ? 'activos' : { falta: estadoNotificaciones().falta },
+      ultimoEnvioMail: ultimoEnvioMail(),
       endpoints: {
         public: [
           { method: 'GET', path: '/api/puntos', description: 'Listar todos los puntos de venta' },
