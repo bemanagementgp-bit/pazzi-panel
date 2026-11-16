@@ -91,6 +91,10 @@ const startServer = async () => {
       // Commit desplegado (Render lo inyecta). Sirve para saber si un cambio
       // que ya está en GitHub llegó o no al servidor.
       build: process.env.RENDER_GIT_COMMIT?.slice(0, 7) || 'local',
+      // Diagnóstico de los avisos por mail. Solo dice si están activos y, si no,
+      // qué variables faltan: nombres que ya están publicados en .env.example.
+      // Nunca expone la API key ni los destinatarios.
+      avisosMail: estadoNotificaciones().activo ? 'activos' : { falta: estadoNotificaciones().falta },
       endpoints: {
         public: [
           { method: 'GET', path: '/api/puntos', description: 'Listar todos los puntos de venta' },
