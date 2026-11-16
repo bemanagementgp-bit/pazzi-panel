@@ -88,6 +88,9 @@ const startServer = async () => {
       name: '🍞 PAZZI BUNS - API SERVER',
       version: '1.0.0',
       status: 'running',
+      // Commit desplegado (Render lo inyecta). Sirve para saber si un cambio
+      // que ya está en GitHub llegó o no al servidor.
+      build: process.env.RENDER_GIT_COMMIT?.slice(0, 7) || 'local',
       endpoints: {
         public: [
           { method: 'GET', path: '/api/puntos', description: 'Listar todos los puntos de venta' },
