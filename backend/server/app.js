@@ -7,6 +7,7 @@ import puntosRoutes from './routes/puntos.js';
 import validateEnv from './.env.validation.js';
 import logger, { loggerMiddleware } from './utils/logger.js';
 import { apiLimiter } from './middleware/rateLimiters.js';
+import { estadoNotificaciones } from './utils/notificaciones.js';
 
 dotenv.config();
 
@@ -180,6 +181,14 @@ const startServer = async () => {
       : (status < 500 && err.expose ? err.message : 'Error interno del servidor');
     res.status(status).json({ error: safeMessage });
   });
+
+  // Deja en el log si los mails de aviso al admin van a salir o no.
+  const mails = estadoNotificaciones();
+  if (mails.activo) {
+    logger.info('Avisos por mail activos', { from: mails.from, destinatarios: mails.destinatarios });
+  } else {
+    logger.warn('Avisos por mail apagados: falta configurar variables', { falta: mails.falta });
+  }
 
   app.listen(PORT, () => {
     console.log(`

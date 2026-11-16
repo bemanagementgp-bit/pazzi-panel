@@ -141,16 +141,28 @@ const enviarPendientes = async () => {
 };
 
 /**
+ * Estado de la configuración, para dejarlo en el log al arrancar: así se ve de
+ * una si los mails van a salir, sin tener que cargar un punto de prueba.
+ */
+export const estadoNotificaciones = () => {
+  const falta = ['RESEND_API_KEY', 'RESEND_FROM'].filter((clave) => !env(clave));
+  const to = destinatarios();
+  if (!to.length) falta.push('ADMIN_NOTIFY_EMAIL (o ADMIN_EMAIL)');
+  return { activo: falta.length === 0, falta, destinatarios: to, from: env('RESEND_FROM') || null };
+};
+
+/**
  * Encola una solicitud de punto de venta para avisar al admin.
  * Se envía un único mail con todo lo acumulado al cerrar la ventana de agrupado.
  */
 export const notificarSolicitudPunto = (punto) => {
   pendientes.push(punto);
+  logger.info('Solicitud encolada para avisar por mail', { punto: punto?.nombre, enCola: pendientes.length });
   if (timer) return;
   const configurado = Number(env('NOTIFY_DELAY_MS'));
   const delay = env('NOTIFY_DELAY_MS') && configurado >= 0 ? configurado : DELAY_DEFAULT_MS;
   timer = setTimeout(enviarPendientes, delay);
-  timer.unref?.();
+  // Sin unref: si el proceso se apaga justo en esta ventana, el mail se perdía.
 };
 
 /** Envía ya lo que haya en cola (para apagado ordenado y pruebas). */
